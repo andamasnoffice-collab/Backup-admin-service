@@ -14,10 +14,7 @@
     <!-- SheetJS (XLSX) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <!-- Vue 3 Global Build -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.js"></script>
-
-    <!-- PDF.js for PDF Conversion & Token Compression -->
+    <!-- PDF.js for PDF Conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfjs-dist/3.11.174/pdf.min.js"></script>
 
     <!-- Custom Fonts -->
@@ -36,7 +33,7 @@
         }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* Custom Scrollbar for Desktop & Mobile */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
@@ -57,7 +54,7 @@
 
         @media (max-width: 640px) {
             input, select, textarea {
-                font-size: 16px !important; /* Prevents auto-zoom on iOS */
+                font-size: 16px !important;
             }
         }
     </style>
@@ -85,7 +82,7 @@
             <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <div class="flex items-center gap-2 bg-slate-950 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 text-[11px] sm:text-xs font-mono">
                     <span class="w-2.5 h-2.5 rounded-full shrink-0" :class="cloudStatus === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'"></span>
-                    <span class="text-slate-300 hidden sm:inline">{{ cloudStatus === 'connected' ? 'Firebase Cloud Active' : 'Offline / Reconnecting' }}</span>
+                    <span class="text-slate-300 hidden sm:inline">{{ cloudStatus === 'connected' ? 'Firebase Cloud Active' : 'Offline / Menghubungkan' }}</span>
                     <span class="text-slate-300 sm:hidden">{{ cloudStatus === 'connected' ? 'Cloud' : 'Offline' }}</span>
                 </div>
 
@@ -96,7 +93,7 @@
             </div>
         </header>
 
-        <!-- Unauthenticated Login View -->
+        <!-- Authentication Container -->
         <div v-if="!isAuthenticated" class="flex-1 flex items-center justify-center p-4">
             <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 sm:p-8 shadow-2xl space-y-5 sm:space-y-6">
                 <div class="text-center space-y-2">
@@ -104,33 +101,41 @@
                         <i class="fa-solid fa-lock"></i>
                     </div>
                     <h2 class="text-lg sm:text-xl font-extrabold text-white">Login Admin Master</h2>
-                    <p class="text-xs text-slate-400">Masukkan password otorisasi master untuk mengakses seluruh fitur kendali AUTOMAN UNS.</p>
+                    <p class="text-xs text-slate-400">Masukkan Email & Password otorisasi master untuk mengakses fitur kendali AUTOMAN UNS.</p>
                 </div>
 
                 <form @submit.prevent="login" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Password Admin Master</label>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Email Admin</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                            <input type="email" v-model="emailInput" placeholder="admin@automan.uns.ac.id" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Password Admin</label>
                         <div class="relative">
                             <i class="fa-solid fa-key absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                             <input type="password" v-model="passwordInput" placeholder="Masukkan password..." required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono">
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full py-3 bg-amber-500 hover:bg-amber-400 active:scale-98 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 min-h-[46px]">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span>Masuk Pusat Kendali Admin</span>
+                    <button type="submit" :disabled="isLoggingIn" class="w-full py-3 bg-amber-500 hover:bg-amber-400 active:scale-98 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 min-h-[46px]">
+                        <i v-if="isLoggingIn" class="fa-solid fa-spinner fa-spin"></i>
+                        <i v-else class="fa-solid fa-shield-halved"></i>
+                        <span>{{ isLoggingIn ? 'Memproses Login...' : 'Masuk Pusat Kendali Admin' }}</span>
                     </button>
                 </form>
 
                 <div class="pt-3 border-t border-slate-800 text-center text-xs text-slate-500 space-y-1">
-                    <p class="text-[10px]">Password tersimpan tersinkronisasi di Cloud Realtime Database</p>
+                    <p class="text-[10px]">Otentikasi Resmi Firebase Email & Password Active</p>
                 </div>
             </div>
         </div>
 
-        <!-- Authenticated Portal View -->
-        <template v-else>
-            <!-- Navigation Tabs (Touch-Scroll Enabled) -->
+        <div v-else class="flex-1 flex flex-col">
+            <!-- Navigation Tabs -->
             <nav class="sticky top-[53px] sm:top-[57px] z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-3 sm:px-6 lg:px-8 py-2 flex items-center gap-1.5 sm:gap-2 overflow-x-auto touch-scroll scrollbar-none snap-x">
                 <button @click="currentTab = 'overview'" :class="currentTab === 'overview' ? 'bg-amber-500 text-slate-950 font-extrabold shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="px-3.5 sm:px-4 py-2.5 rounded-xl text-xs transition flex items-center gap-2 whitespace-nowrap shrink-0 snap-start active:scale-95 min-h-[40px]">
                     <i class="fa-solid fa-chart-line text-xs"></i>
@@ -174,7 +179,7 @@
             <!-- Main Content Container -->
             <main class="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-4 sm:space-y-6">
 
-                <!-- Overview Tab -->
+                <!-- OVERVIEW TAB -->
                 <section v-if="currentTab === 'overview'" class="space-y-4 sm:space-y-6">
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
                         <div class="bg-slate-900 border border-slate-800 p-3.5 sm:p-4 rounded-2xl space-y-1">
@@ -310,11 +315,14 @@
                     </div>
                 </section>
 
-                <!-- Approvals Tab -->
+                <!-- APPROVALS TAB -->
                 <section v-if="currentTab === 'approvals'" class="space-y-4">
-                    <div class="bg-slate-900 border border-slate-800 p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div class="bg-slate-900 border border-slate-800 p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-lg">
                         <div>
-                            <h2 class="font-extrabold text-sm sm:text-base text-white">Antrean Pengajuan Servis Pengemudi</h2>
+                            <h2 class="font-extrabold text-sm sm:text-base text-white flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-amber-400"></i>
+                                <span>Antrean Pengajuan Servis Pengemudi</span>
+                            </h2>
                             <p class="text-xs text-slate-400">Verifikasi dan input invoice resmi untuk menyelesaikan proses pengajuan servis</p>
                         </div>
                         <span class="text-xs font-mono font-bold bg-amber-950 text-amber-400 border border-amber-800 px-3 py-1.5 rounded-xl self-start sm:self-auto">
@@ -344,7 +352,7 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Tanggal Pengajuan:</span>
-                                    <span class="text-amber-400 font-bold">{{ car.inServiceDate || '-' }}</span>
+                                    <span class="text-amber-400 font-bold">{{ formatDateDisplay(car.inServiceDate) || '-' }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Odometer Terbaca:</span>
@@ -375,16 +383,16 @@
                         </div>
                     </div>
 
-                    <div v-else class="bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-12 text-center text-slate-500 space-y-2">
+                    <div v-else class="bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-12 text-center text-slate-500 space-y-2 shadow-xl">
                         <i class="fa-solid fa-circle-check text-3xl text-emerald-500/50"></i>
                         <p class="text-sm font-bold text-slate-300">Tidak ada pengajuan servis dalam antrean.</p>
                         <p class="text-xs">Pengajuan baru dari aplikasi pengemudi akan otomatis muncul di sini secara real-time.</p>
                     </div>
                 </section>
 
-                <!-- Vehicles Tab -->
+                <!-- VEHICLES TAB -->
                 <section v-if="currentTab === 'vehicles'" class="space-y-4">
-                    <div class="bg-slate-900 border border-slate-800 p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div class="bg-slate-900 border border-slate-800 p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-lg">
                         <div class="relative flex-1">
                             <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                             <input type="text" v-model="searchVehicle" placeholder="Cari Plat, Tipe, Sopir..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500">
@@ -423,7 +431,7 @@
                                         <th class="p-3 text-center">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-800 font-medium">
+                                <tbody v-if="filteredVehiclesList.length > 0" class="divide-y divide-slate-800 font-medium">
                                     <tr v-for="car in filteredVehiclesList" :key="car.id" class="hover:bg-slate-800/40 transition">
                                         <td class="p-3 font-mono font-extrabold text-amber-400 whitespace-nowrap">{{ car.plate }}</td>
                                         <td class="p-3 font-bold text-white whitespace-nowrap">{{ car.model }}</td>
@@ -431,12 +439,12 @@
                                         <td class="p-3 text-slate-300 whitespace-nowrap">{{ car.driver || '-' }}</td>
                                         <td class="p-3 font-mono text-sky-400 font-bold whitespace-nowrap">
                                             <button @click="openUpdateKmModal(car)" class="hover:underline flex items-center gap-1" title="Klik untuk update Odometer">
-                                                <span>{{ (car.currentKm || 0).toLocaleString('id-ID') }} KM</span>
+                                                <span>{{ (Number(car.currentKm) || 0).toLocaleString('id-ID') }} KM</span>
                                                 <i class="fa-solid fa-pen-to-square text-[10px] text-slate-500"></i>
                                             </button>
                                         </td>
                                         <td class="p-3 whitespace-nowrap">
-                                            <span v-if="car.isUnderService" class="px-2 py-0.5 bg-sky-950 text-sky-400 border border-sky-800 rounded-full text-[10px] font-bold">
+                                            <span v-if="car.isUnderService" class="px-2 py-0.5 bg-sky-950 text-sky-400 border border-sky-800 rounded-full text-[10px] font-bold animate-pulse">
                                                 SEDANG SERVIS
                                             </span>
                                             <span v-else class="px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800 rounded-full text-[10px] font-bold">
@@ -455,12 +463,19 @@
                                         </td>
                                     </tr>
                                 </tbody>
+                                <tbody v-else>
+                                    <tr>
+                                        <td colspan="7" class="p-8 text-center text-slate-500 font-medium">
+                                            Tidak ada data armada yang sesuai filter.
+                                        </td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </section>
 
-                <!-- Transactions Tab -->
+                <!-- LOGS TAB -->
                 <section v-if="currentTab === 'logs'" class="space-y-4">
                     <div class="bg-slate-900 border border-slate-800 p-3.5 sm:p-4 rounded-2xl space-y-3">
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -492,7 +507,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-slate-800">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Armada</label>
-                                <select v-model="logVehicleFilter" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                                <select v-model="logVehicleFilter" @change="resetLogPagination" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                                     <option value="ALL">Semua Armada</option>
                                     <option v-for="car in vehicles" :key="car.id" :value="car.id">{{ car.plate }} - {{ car.model }}</option>
                                 </select>
@@ -500,7 +515,7 @@
 
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Bengkel Mitra</label>
-                                <select v-model="logWorkshopFilter" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                                <select v-model="logWorkshopFilter" @change="resetLogPagination" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                                     <option value="ALL">Semua Bengkel</option>
                                     <option value="Nasmoco">Nasmoco</option>
                                     <option value="Montecarlo">Montecarlo</option>
@@ -513,11 +528,11 @@
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Bulan & Tahun Servis</label>
                                 <div class="grid grid-cols-2 gap-1">
-                                    <select v-model="logMonthFilter" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                                    <select v-model="logMonthFilter" @change="resetLogPagination" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                                         <option value="ALL">Semua Bln</option>
                                         <option v-for="m in 12" :key="m" :value="m">{{ getMonthName(m) }}</option>
                                     </select>
-                                    <select v-model="logYearFilter" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                                    <select v-model="logYearFilter" @change="resetLogPagination" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                                         <option value="ALL">Semua Thn</option>
                                         <option :value="2024">2024</option>
                                         <option :value="2025">2025</option>
@@ -528,7 +543,7 @@
 
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Urutan Data</label>
-                                <select v-model="logSortOption" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white font-semibold focus:outline-none focus:border-amber-500">
+                                <select v-model="logSortOption" @change="resetLogPagination" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white font-semibold focus:outline-none focus:border-amber-500">
                                     <option value="DATE_DESC">📅 Tanggal Terbaru → Terlama</option>
                                     <option value="DATE_ASC">📅 Tanggal Terlama → Terbaru</option>
                                     <option value="COST_DESC">💰 Biaya Servis Tertinggi</option>
@@ -560,7 +575,7 @@
                                     </tr>
                                 </thead>
                                 <tbody v-if="filteredServiceLogs.length > 0" class="divide-y divide-slate-800 font-medium">
-                                    <tr v-for="log in filteredServiceLogs" :key="log.id" class="hover:bg-slate-800/40 transition">
+                                    <tr v-for="log in filteredServiceLogs" :key="log.id || log.invoiceNo" class="hover:bg-slate-800/40 transition">
                                         <td class="p-3 font-mono text-slate-400 whitespace-nowrap">{{ formatDateDisplay(log.date) }}</td>
                                         <td class="p-3 font-mono font-bold text-amber-400 whitespace-nowrap">{{ log.vehicleId }}</td>
                                         <td class="p-3 text-white font-semibold whitespace-nowrap">{{ log.workshop }}</td>
@@ -575,7 +590,7 @@
                                                     ✓ {{ getComponentNameLabel(cKey) }}
                                                 </span>
                                                 <span v-for="(it, i) in normalizeArray(log.items)" :key="i" class="text-slate-300 text-[10px] bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
-                                                    {{ it.name }}
+                                                    {{ (it && typeof it === 'object' ? it.name : it) }}
                                                 </span>
                                             </div>
                                         </td>
@@ -609,10 +624,10 @@
                         </div>
                     </div>
 
-                    <!-- MOBILE CARD LIST VIEW (Ultra Comfortable for Smartphones) -->
+                    <!-- MOBILE CARD LIST VIEW WITH PAGINATION -->
                     <div class="block md:hidden space-y-3">
                         <div v-if="filteredServiceLogs.length > 0" class="space-y-3">
-                            <div v-for="log in filteredServiceLogs" :key="log.id" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
+                            <div v-for="(log, idx) in paginatedServiceLogs" :key="log.id || idx" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
                                 <div class="flex items-start justify-between border-b border-slate-800 pb-2.5">
                                     <div>
                                         <span class="px-2.5 py-0.5 bg-amber-950 border border-amber-800 text-amber-400 font-mono font-extrabold text-xs rounded-lg uppercase">
@@ -641,7 +656,7 @@
                                             ✓ {{ getComponentNameLabel(cKey) }}
                                         </span>
                                         <span v-for="(it, i) in normalizeArray(log.items)" :key="i" class="text-slate-300 text-[10px] bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
-                                            {{ it.name }} (Rp {{ (Number(it.cost) || 0).toLocaleString('id-ID') }})
+                                            {{ (it && typeof it === 'object' ? it.name : it) }} (Rp {{ (it && typeof it === 'object' ? Number(it.cost) || 0 : 0).toLocaleString('id-ID') }})
                                         </span>
                                     </div>
                                 </div>
@@ -662,6 +677,14 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Mobile Load More Button -->
+                            <div v-if="hasMoreLogs" class="pt-2 text-center">
+                                <button @click="loadMoreLogs" class="w-full py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sky-400 font-bold rounded-xl text-xs transition active:scale-95 flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-circle-chevron-down"></i>
+                                    <span>Tampilkan Lebih Banyak (Sisa {{ filteredServiceLogs.length - paginatedServiceLogs.length }} transaksi)</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div v-else class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center text-slate-500 space-y-1">
@@ -670,12 +693,12 @@
                     </div>
                 </section>
 
-                <!-- Monthly Recap Tab -->
+                <!-- RECAP TAB -->
                 <section v-if="currentTab === 'recap'" class="space-y-4">
                     <div class="bg-slate-900 border border-slate-800 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between gap-2">
                         <div>
                             <h2 class="font-extrabold text-sm sm:text-base text-white">Rekapitulasi Laporan Perawatan Bulanan</h2>
-                            <p class="text-xs text-slate-400 hidden sm:block">Rincian akumulasi pengeluaran biaya per bulan dan per bengkel mitra</p>
+                            <p class="text-xs text-slate-400 hidden sm:block">Klik nama bengkel mitra untuk melihat detail armada, rincian biaya, driver, dan invoice</p>
                         </div>
                         <select v-model="recapYear" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-bold">
                             <option :value="2024">Tahun 2024</option>
@@ -698,15 +721,26 @@
                             </div>
 
                             <div v-if="getMonthlyWorkshopBreakdown(m, recapYear).length > 0" class="pt-2 border-t border-slate-800/80 space-y-1.5">
-                                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Breakdown Bengkel Rekanan:</p>
-                                <div class="space-y-1 max-h-36 overflow-y-auto pr-1 touch-scroll">
-                                    <div v-for="ws in getMonthlyWorkshopBreakdown(m, recapYear)" :key="ws.name" class="flex justify-between items-center text-xs bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                                    <span>Breakdown Bengkel Rekanan:</span>
+                                    <span class="text-[9px] text-amber-400 font-normal lowercase">(klik untuk rincian)</span>
+                                </p>
+                                <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1 touch-scroll">
+                                    <button 
+                                        v-for="ws in getMonthlyWorkshopBreakdown(m, recapYear)" 
+                                        :key="ws.name" 
+                                        @click="openWorkshopDetailModal(m, recapYear, ws.name)"
+                                        class="w-full flex justify-between items-center text-xs bg-slate-950 hover:bg-slate-800/80 hover:border-amber-500/50 transition px-2.5 py-1.5 rounded-xl border border-slate-800 text-left cursor-pointer group active:scale-98">
                                         <div class="flex items-center gap-1.5 truncate max-w-[150px]">
-                                            <span class="font-semibold text-amber-400 truncate">{{ ws.name }}</span>
+                                            <i class="fa-solid fa-wrench text-amber-400/80 group-hover:text-amber-400 text-[10px]"></i>
+                                            <span class="font-semibold text-slate-200 group-hover:text-amber-400 truncate transition">{{ ws.name }}</span>
                                             <span class="text-[10px] text-slate-500 font-mono">({{ ws.count }}x)</span>
                                         </div>
-                                        <span class="font-mono font-bold text-emerald-400 shrink-0">Rp {{ ws.total.toLocaleString('id-ID') }}</span>
-                                    </div>
+                                        <div class="flex items-center gap-1 shrink-0">
+                                            <span class="font-mono font-bold text-emerald-400">Rp {{ ws.total.toLocaleString('id-ID') }}</span>
+                                            <i class="fa-solid fa-chevron-right text-[10px] text-slate-600 group-hover:text-amber-400 transition ml-0.5"></i>
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
                             <div v-else class="pt-2 border-t border-slate-800/80 text-[11px] text-slate-500 italic">
@@ -716,7 +750,7 @@
                     </div>
                 </section>
 
-                <!-- SPJ Tab -->
+                <!-- SPJ TAB -->
                 <section v-if="currentTab === 'spj'" class="space-y-4 sm:space-y-6">
                     <div class="bg-slate-900 border border-slate-800 p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
@@ -773,26 +807,8 @@
                     </div>
                 </section>
 
-                <!-- Settings Tab -->
+                <!-- SETTINGS TAB -->
                 <section v-if="currentTab === 'settings'" class="space-y-4 sm:space-y-6 max-w-3xl">
-                    <!-- Password Admin -->
-                    <div class="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl space-y-3 sm:space-y-4">
-                        <h3 class="font-extrabold text-sm sm:text-base text-white flex items-center gap-2">
-                            <i class="fa-solid fa-shield-halved text-amber-400"></i>
-                            <span>Pengaturan Kata Sandi Admin Master</span>
-                        </h3>
-
-                        <form @submit.prevent="updatePassword" class="space-y-3 text-xs">
-                            <div>
-                                <label class="block font-bold text-slate-300 mb-1">Password Baru</label>
-                                <input type="password" v-model="newPassword" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono">
-                            </div>
-                            <button type="submit" class="w-full sm:w-auto px-4 py-2.5 bg-amber-600 hover:bg-amber-500 active:scale-95 text-slate-950 font-bold rounded-xl transition min-h-[44px]">
-                                Simpan Password Baru
-                            </button>
-                        </form>
-                    </div>
-
                     <!-- Gemini Vision Keys & Health Monitor -->
                     <div class="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl space-y-4 sm:space-y-5">
                         <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-3">
@@ -805,20 +821,20 @@
                             </div>
                             <span class="text-[10px] font-mono bg-sky-950 text-sky-400 border border-sky-800 px-2.5 py-1 rounded-full font-bold flex items-center gap-1.5">
                                 <i class="fa-solid fa-server text-[9px]"></i>
-                                {{ getGeminiKeys().length }} Keys Terpasang
+                                {{ getGeminiKeys().length > 0 ? getGeminiKeys().length + ' Keys Terpasang' : 'Default AI Terpasang' }}
                             </span>
                         </div>
 
                         <div class="space-y-3 text-xs">
                             <div>
                                 <label class="block font-bold text-slate-300 mb-1 flex items-center justify-between">
-                                    <span>Daftar Gemini API Keys / GCP Tokens:</span>
-                                    <span class="text-[10px] text-amber-400 font-mono">1 Key Per Baris (AQ..., AIzaSy...)</span>
+                                    <span>Daftar Gemini API Keys (Opsional Tambahan Key):</span>
+                                    <span class="text-[10px] text-amber-400 font-mono">1 Key Per Baris (AIzaSy...)</span>
                                 </label>
-                                <textarea v-model="settings.geminiApiKey" rows="3" placeholder="AIzaSy... atau AQ.Ab8RN6... (API Key Utama)&#10;AQ... (API Key Backup 1)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono text-xs focus:outline-none focus:border-sky-500 leading-relaxed"></textarea>
+                                <textarea v-model="settings.geminiApiKey" rows="3" placeholder="AIzaSy... (API Key Pribadi / Tambahan)&#10;AIzaSy... (API Key Backup)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono text-xs focus:outline-none focus:border-sky-500 leading-relaxed"></textarea>
                                 <p class="text-[11px] text-amber-400/90 mt-1 flex items-center gap-1.5">
                                     <i class="fa-solid fa-circle-check text-emerald-400"></i>
-                                    <span>Mendukung API Key AI Studio (<code class="bg-amber-950 px-1 py-0.5 rounded border border-amber-800 text-amber-300 font-mono">AIzaSy...</code>) maupun Google Cloud Token (<code class="bg-amber-950 px-1 py-0.5 rounded border border-amber-800 text-amber-300 font-mono">AQ...</code>). Buat API Key gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank" class="underline font-bold text-sky-400 hover:text-sky-300">Google AI Studio</a>.</span>
+                                    <span>Bisa dikosongkan untuk memakai AI bawaan Canvas, atau buat API Key gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank" class="underline font-bold text-sky-400 hover:text-sky-300">Google AI Studio</a>.</span>
                                 </p>
                             </div>
 
@@ -893,45 +909,23 @@
                                 <input type="url" v-model="settings.sheetsWebhookUrl" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono text-xs focus:outline-none focus:border-emerald-500">
                             </div>
 
-                            <!-- Step by Step GAS Deployment Guide -->
-                            <div class="bg-slate-950 p-3.5 rounded-xl border border-amber-500/30 space-y-2 text-xs">
-                                <span class="font-bold text-amber-400 block text-xs flex items-center gap-1.5">
-                                    <i class="fa-solid fa-circle-exclamation"></i>
-                                    <span>Petunjuk Penting Deployment Google Apps Script (Solusi Eror createFolder):</span>
-                                </span>
-                                <ol class="list-decimal list-inside space-y-1 text-slate-300 text-[11px] leading-relaxed">
-                                    <li>Buka <a href="https://script.google.com" target="_blank" class="text-sky-400 underline font-bold">Google Apps Script</a> dan buka proyek skrip Anda.</li>
-                                    <li>Klik tombol <strong>"Salin Kode Apps Script"</strong> di bawah lalu ganti seluruh isi kode lama dengan kode baru.</li>
-                                    <li class="text-amber-300 font-bold bg-amber-950/40 p-2 rounded border border-amber-800/50 my-1 space-y-1">
-                                        <p class="text-amber-400 font-extrabold"><i class="fa-solid fa-key mr-1"></i> LANGKAH WAJIB MEMBERIKAN IZIN CREATE FOLDER:</p>
-                                        <p class="font-normal text-slate-200">a. Di baris tombol atas Apps Script, ganti pilihan fungsi dari <code class="bg-slate-900 px-1 text-slate-300 font-mono">doGet</code> menjadi <code class="bg-slate-900 px-1 text-emerald-400 font-mono font-bold">testPermissions</code>.</p>
-                                        <p class="font-normal text-slate-200">b. Klik tombol <strong>▶ RUN (Jalankan)</strong>.</p>
-                                        <p class="font-normal text-slate-200">c. Pop-up izin Google akan muncul: Klik <strong>Review Permissions</strong> &rarr; Pilih Akun Google &rarr; Klik <strong>Advanced</strong> &rarr; Klik <strong>Go to Project (unsafe)</strong> &rarr; Klik <strong>Allow (Izinkan)</strong>.</p>
-                                        <p class="font-normal text-emerald-300">d. Langkah ini memberikan otorisasi <code class="font-mono">https://www.googleapis.com/auth/drive</code> (Full Drive Write Access).</p>
-                                    </li>
-                                    <li>Setelah di-Run, klik tombol <strong>Deploy</strong> di pojok kanan atas &rarr; pilih <strong>New deployment</strong>.</li>
-                                    <li>Pilih jenis <strong>Web app</strong>, atur <strong>Execute as:</strong> <code class="bg-slate-900 px-1 text-amber-300 font-mono">Me (Saya)</code>, dan <strong>Who has access:</strong> <code class="bg-amber-950 px-1.5 py-0.5 text-amber-300 border border-amber-800 rounded font-mono font-bold">Anyone (Siapa saja)</code>.</li>
-                                    <li>Klik <strong>Deploy</strong>, lalu salin Web App URL baru (<code class="text-sky-400">/exec</code>) ke kolom Webhook URL di atas.</li>
-                                </ol>
-                            </div>
-
                             <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <span class="font-bold text-slate-200 block text-xs">📜 Kode Backend Apps Script (Drive Upload Folder Bulan/Tahun & Sheets Auto-Write Logs)</span>
+                                    <span class="font-bold text-slate-200 block text-xs">📜 Kode Backend Apps Script (Drive Upload & Sheets Auto-Write Logs)</span>
                                     <button @click="copyAppsScriptCode" class="px-2.5 py-1.5 bg-sky-950 hover:bg-sky-900 border border-sky-800 text-sky-300 rounded-lg text-[10px] font-bold transition flex items-center gap-1 active:scale-95">
                                         <i class="fa-solid fa-copy"></i>
                                         <span>Salin Kode Apps Script</span>
                                     </button>
                                 </div>
                                 <p class="text-[10px] text-slate-400 leading-relaxed">
-                                    Kode ini membuat/memperbarui tab <code class="bg-slate-900 text-emerald-300 px-1 rounded">Riwayat_Servis_Logs</code> dan <code class="bg-slate-900 text-amber-300 px-1 rounded">Master_Armada</code> di Google Sheets, serta menyimpan nota secara rapi di folder Google Drive <code class="bg-slate-900 text-sky-300 px-1 rounded">AUTOMAN_Nota_Servis / [Tahun] / [Bulan]</code> (contoh: <code class="text-amber-300">AUTOMAN_Nota_Servis/2026/08 - Agustus/</code>).
+                                    Menyimpan rekaman transaksi di tab <code class="bg-slate-900 text-emerald-300 px-1 rounded">Riwayat_Servis_Logs</code> serta arsip berkas di folder Drive <code class="bg-slate-900 text-sky-300 px-1 rounded">AUTOMAN_Nota_Servis / [Tahun] / [Bulan]</code>.
                                 </p>
                             </div>
 
                             <div class="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
                                 <div>
                                     <span class="font-bold text-slate-200 block">Auto-Write Laporan Realtime</span>
-                                    <span class="text-[10px] text-slate-400">Otomatis kirim/perbarui data log ke tab Riwayat_Servis_Logs di Google Sheets setiap ada penyimpanan transaksi</span>
+                                    <span class="text-[10px] text-slate-400">Otomatis sync ke Google Sheets setiap ada transaksi yang disimpan</span>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" v-model="settings.autoSyncSheets" class="sr-only peer">
@@ -945,26 +939,21 @@
                                 </button>
                                 <button @click="syncToGoogleSheets" :disabled="isSheetsSyncing" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 font-bold rounded-xl transition flex items-center gap-1.5 active:scale-95 min-h-[40px]">
                                     <i :class="isSheetsSyncing ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-file-arrow-up'"></i>
-                                    <span>{{ isSheetsSyncing ? 'Mengirim...' : 'Tulis / Sync Riwayat_Servis_Logs' }}</span>
+                                    <span>{{ isSheetsSyncing ? 'Mengirim...' : 'Sync Riwayat_Servis_Logs' }}</span>
                                 </button>
                                 <button @click="readFromGoogleSheets" :disabled="isSheetsSyncing" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 font-bold rounded-xl transition flex items-center gap-1.5 active:scale-95 min-h-[40px]">
                                     <i :class="isSheetsSyncing ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-file-arrow-down'"></i>
                                     <span>Tes Auto-Read Sheets</span>
                                 </button>
                             </div>
-
-                            <div v-if="sheetsReadResult" class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-300 space-y-1">
-                                <div class="text-amber-400 font-bold">Hasil Auto-Read Google Sheets:</div>
-                                <pre class="text-[10px] overflow-x-auto text-emerald-400 max-h-32 touch-scroll">{{ JSON.stringify(sheetsReadResult, null, 2) }}</pre>
-                            </div>
                         </div>
                     </div>
                 </section>
 
             </main>
-        </template>
+        </div>
 
-        <!-- MODAL: ADD / EDIT VEHICLE -->
+        <!-- MODAL VEHICLE -->
         <div v-if="modals.vehicle" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
             <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-5 sm:p-6 space-y-4 max-h-[92vh] overflow-y-auto touch-scroll">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -1005,7 +994,7 @@
             </div>
         </div>
 
-        <!-- MODAL: UPDATE ODOMETER -->
+        <!-- MODAL UPDATE KM -->
         <div v-if="modals.updateKm" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
             <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 sm:p-6 space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -1031,7 +1020,7 @@
             </div>
         </div>
 
-        <!-- MODAL: DIGITAL INVOICE VIEWER -->
+        <!-- MODAL INVOICE -->
         <div v-if="modals.invoice && selectedLog" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
             <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 sm:p-6 space-y-4 max-h-[92vh] overflow-y-auto touch-scroll shadow-2xl">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -1053,7 +1042,7 @@
                     <div class="flex justify-between"><span class="text-slate-400">Bengkel Mitra:</span><span class="text-white font-semibold">{{ selectedLog.workshop }}</span></div>
                     <div class="flex justify-between"><span class="text-slate-400">Tanggal Servis:</span><span class="text-white">{{ formatDateDisplay(selectedLog.date) }}</span></div>
                     <div class="flex justify-between"><span class="text-slate-400">Odometer Terbaca:</span><span class="text-sky-400 font-bold">{{ (selectedLog.km || 0).toLocaleString('id-ID') }} KM</span></div>
-                    <div class="flex justify-between"><span class="text-slate-400">Kategori Servis:</span><span class="font-bold" :class="selectedLog.isRoutine !== false ? 'text-emerald-400' : 'text-slate-300'">{{ selectedLog.isRoutine !== false ? 'Servis Rutin Berkala' : 'Perbaikan Non-Rutin' }}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Kategori Servis:</span><span class="font-bold" :class="selectedLog.isRoutine !== false ? 'text-emerald-400' : 'text-slate-300'">{{ selectedLog.isRoutine !== false ? 'Servis Berkala Rutin' : 'Perbaikan Non-Rutin' }}</span></div>
                 </div>
 
                 <!-- Google Drive File Attachment Link -->
@@ -1080,8 +1069,8 @@
                     <p class="text-xs font-bold text-slate-300">Rincian Pekerjaan & Sparepart:</p>
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 divide-y divide-slate-800/80 max-h-48 overflow-y-auto text-xs touch-scroll">
                         <div v-for="(it, i) in normalizeArray(selectedLog.items)" :key="i" class="py-1.5 flex justify-between items-center">
-                            <span class="text-slate-200 font-medium">{{ it.name }}</span>
-                            <span class="text-emerald-400 font-mono font-bold">Rp {{ (Number(it.cost) || 0).toLocaleString('id-ID') }}</span>
+                            <span class="text-slate-200 font-medium">{{ (it && typeof it === 'object' ? it.name : it) }}</span>
+                            <span class="text-emerald-400 font-mono font-bold">Rp {{ (it && typeof it === 'object' ? Number(it.cost) || 0 : 0).toLocaleString('id-ID') }}</span>
                         </div>
                     </div>
                 </div>
@@ -1099,208 +1088,399 @@
             </div>
         </div>
 
-        <!-- MODAL: CREATE / PROCESS SERVICE LOG -->
-        <div v-if="modals.log" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div class="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-2xl p-5 sm:p-6 space-y-4 my-auto max-h-[92vh] overflow-y-auto touch-scroll">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                    <h3 class="font-bold text-white text-base">{{ logForm.id ? 'Edit Catatan Invoice Servis' : 'Input Catatan Invoice Servis Baru' }}</h3>
-                    <button @click="modals.log = false" class="text-slate-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <!-- MODAL WORKSHOP DETAIL -->
+        <div v-if="modals.workshopDetail && selectedWorkshopDetail" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+            <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl p-5 sm:p-6 space-y-4 max-h-[92vh] overflow-y-auto touch-scroll shadow-2xl">
+                <div class="flex justify-between items-start border-b border-slate-800 pb-3">
+                    <div class="space-y-0.5">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 bg-amber-950 text-amber-400 border border-amber-800 font-mono font-bold text-xs rounded-lg uppercase">
+                                {{ selectedWorkshopDetail.workshopName }}
+                            </span>
+                            <span class="text-xs text-slate-400 font-mono font-bold">
+                                {{ getMonthName(selectedWorkshopDetail.month) }} {{ selectedWorkshopDetail.year }}
+                            </span>
+                        </div>
+                        <h3 class="font-bold text-white text-base">Rincian Servis & Serviced Vehicles</h3>
+                    </div>
+                    <button @click="modals.workshopDetail = false" class="text-slate-400 hover:text-white p-2 text-lg"><i class="fa-solid fa-xmark"></i></button>
                 </div>
 
-                <!-- AI Gemini Vision OCR & Google Drive Auto Save Banner -->
-                <div class="bg-slate-950 p-3 sm:p-3.5 rounded-xl border border-dashed border-sky-800/80 space-y-2">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-wand-magic-sparkles text-sky-400 text-lg"></i>
-                            <div>
-                                <span class="text-xs text-slate-300 font-bold flex items-center gap-1.5 flex-wrap">
-                                    <span>AI Gemini Vision & Drive Upload</span>
-                                    <span class="bg-amber-950 text-amber-400 border-amber-800 text-[9px] border px-1.5 py-0.2 rounded font-mono font-bold">
-                                        ⚡ Upload Saat Simpan
-                                    </span>
+                <!-- Summary Bar -->
+                <div class="grid grid-cols-2 gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs font-mono">
+                    <div>
+                        <span class="text-slate-400 block text-[10px]">Total Transaksi Servis:</span>
+                        <span class="text-amber-400 font-bold text-sm">{{ selectedWorkshopDetail.logs.length }} Transaksi</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px]">Total Pengeluaran:</span>
+                        <span class="text-emerald-400 font-bold text-sm">Rp {{ selectedWorkshopDetail.totalCost.toLocaleString('id-ID') }}</span>
+                    </div>
+                </div>
+
+                <!-- Vehicle Service Logs Itemized List -->
+                <div class="space-y-3">
+                    <div v-for="log in selectedWorkshopDetail.logs" :key="log.id" class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-2.5 text-xs">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-900 pb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono font-extrabold text-amber-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                                    {{ log.vehicleId }}
                                 </span>
-                                <span class="text-[10px] text-slate-400">Ekstraksi AI & simpan berkas asli ke Google Drive saat klik Simpan</span>
+                                <span class="text-white font-bold">{{ getVehicleModel(log.vehicleId) }}</span>
+                                <span class="text-slate-400 text-[11px]">(Driver: {{ getVehicleDriver(log.vehicleId) }})</span>
+                            </div>
+                            <div class="text-right flex items-center justify-between sm:justify-end gap-2">
+                                <span class="text-slate-400 font-mono text-[11px]">{{ formatDateDisplay(log.date) }}</span>
+                                <span class="text-emerald-400 font-mono font-bold">Rp {{ (Number(log.totalCost) || 0).toLocaleString('id-ID') }}</span>
                             </div>
                         </div>
-                        <label :class="(isScanningInvoice || isUploadingToDrive) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-sky-500'" class="w-full sm:w-auto px-3.5 py-2 bg-sky-600 text-white rounded-xl text-xs font-bold transition shrink-0 flex items-center justify-center gap-1.5 shadow active:scale-95 min-h-[40px]">
-                            <i v-if="isScanningInvoice" class="fa-solid fa-circle-notch fa-spin"></i>
-                            <i v-else class="fa-solid fa-camera"></i>
-                            <span>{{ isScanningInvoice ? 'Scanning AI...' : 'Scan Foto / PDF Nota' }}</span>
-                            <input type="file" accept="image/*,application/pdf" @change="handleInvoiceScan" :disabled="isScanningInvoice || isUploadingToDrive" class="hidden">
-                        </label>
-                    </div>
 
-                    <div v-if="scanStatusMessage" class="text-[11px] font-mono px-2.5 py-1 bg-slate-900 border border-slate-800 text-sky-300 rounded-lg flex items-center justify-between gap-1.5">
-                        <span class="truncate"><i class="fa-solid fa-info-circle text-amber-400 mr-1"></i>{{ scanStatusMessage }}</span>
-                        <a v-if="logForm.fileUrl" :href="logForm.fileUrl" target="_blank" class="text-amber-400 hover:underline font-bold text-[10px] shrink-0">
-                            [Lihat Drive]
-                        </a>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
+                            <div class="flex justify-between bg-slate-900 p-2 rounded-lg border border-slate-800/80">
+                                <span class="text-slate-400">Odometer:</span>
+                                <span class="text-sky-400 font-bold">{{ (log.km || 0).toLocaleString('id-ID') }} KM</span>
+                            </div>
+                            <div class="flex justify-between bg-slate-900 p-2 rounded-lg border border-slate-800/80">
+                                <span class="text-slate-400">No. Invoice:</span>
+                                <span class="text-slate-200 font-bold">{{ log.invoiceNo || '-' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Itemized Breakdown -->
+                        <div class="space-y-1">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Itemized Breakdown & Sparepart:</span>
+                            <div class="space-y-1 bg-slate-900/60 p-2 rounded-lg border border-slate-800/60">
+                                <div v-for="(it, idx) in normalizeArray(log.items)" :key="idx" class="flex justify-between text-[11px]">
+                                    <span class="text-slate-300">• {{ (it && typeof it === 'object' ? it.name : it) }}</span>
+                                    <span class="text-emerald-400 font-mono">Rp {{ (it && typeof it === 'object' ? Number(it.cost) || 0 : 0).toLocaleString('id-ID') }}</span>
+                                </div>
+                                <div v-if="normalizeArray(log.replacedComponents).length > 0" class="pt-1 flex flex-wrap gap-1 border-t border-slate-800/80">
+                                    <span v-for="cKey in normalizeArray(log.replacedComponents)" :key="cKey" class="px-1.5 py-0.5 bg-sky-950 text-sky-300 border border-sky-800 rounded text-[9px] font-bold">
+                                        ✓ {{ getComponentNameLabel(cKey) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Invoice Link & Action Button -->
+                        <div class="flex items-center justify-end gap-2 pt-1">
+                            <a v-if="log.fileUrl" :href="log.fileUrl" target="_blank" class="px-2.5 py-1.5 bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 font-bold rounded-lg text-[10px] transition flex items-center gap-1 active:scale-95">
+                                <i class="fa-solid fa-cloud-arrow-down"></i> Buka Drive
+                            </a>
+                            <button @click="openInvoiceModal(log)" class="px-2.5 py-1.5 bg-sky-950 hover:bg-sky-900 border border-sky-800 text-sky-300 font-bold rounded-lg text-[10px] transition flex items-center gap-1 active:scale-95">
+                                <i class="fa-solid fa-file-invoice"></i> Lihat Faktur
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <form @submit.prevent="saveLog" class="space-y-3 text-xs">
-                    <!-- Manual Drive Attachment / Upload Row -->
-                    <div class="space-y-1 p-3 bg-slate-950 rounded-xl border border-slate-800/80">
-                        <label class="block font-bold text-slate-300 mb-1 flex items-center justify-between">
-                            <span>Link Scan Nota (Google Drive URL):</span>
-                            <span v-if="pendingUploadFile" class="text-amber-400 font-mono text-[10px]">⏳ Siap Diunggah Saat Simpan</span>
-                            <span v-else-if="logForm.fileUrl" class="text-emerald-400 font-mono text-[10px]">✓ Terhubung</span>
-                        </label>
-                        <div class="flex items-center gap-2">
-                            <input type="url" v-model="logForm.fileUrl" placeholder="https://drive.google.com/file/d/..." class="flex-1 bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white font-mono text-xs focus:outline-none focus:border-emerald-500">
-                            <label :class="isUploadingToDrive ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-emerald-600'" class="px-3 py-2.5 bg-emerald-700 text-white rounded-xl text-xs font-bold transition shrink-0 flex items-center justify-center gap-1.5 active:scale-95 min-h-[40px]">
-                                <i class="fa-solid fa-file-arrow-up"></i>
-                                <span>{{ pendingUploadFile ? 'Ganti File' : 'Pilih File Nota' }}</span>
-                                <input type="file" accept="image/*,application/pdf" @change="manualDriveUpload" :disabled="isUploadingToDrive" class="hidden">
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">Armada Kendaraan *</label>
-                            <select v-model="logForm.vehicleId" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-bold">
-                                <option v-for="car in vehicles" :key="car.id" :value="car.id">{{ car.plate }} - {{ car.model }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">Bengkel Mitra *</label>
-                            <select v-model="logForm.workshop" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-bold">
-                                <option value="Nasmoco">Nasmoco</option>
-                                <option value="Montecarlo">Montecarlo</option>
-                                <option value="Zaini Auto">Zaini Auto</option>
-                                <option value="Rekanan">Rekanan</option>
-                                <option value="Bengkel Luar">Bengkel Luar</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">Tanggal Servis *</label>
-                            <input type="date" v-model="logForm.date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">Odometer (KM) *</label>
-                            <input type="number" v-model.number="logForm.km" required min="0" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono font-bold text-sky-400">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">No. Invoice / Faktur</label>
-                            <input type="text" v-model="logForm.invoiceNo" placeholder="Contoh: INV-9002" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">Kategori Jenis Servis *</label>
-                            <select v-model="logForm.isRoutine" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-bold">
-                                <option :value="true">🟢 Servis Berkala Rutin (Reset Status)</option>
-                                <option :value="false">🔵 Perbaikan Non-Rutin (Insidental)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="space-y-1.5 pt-2 border-t border-slate-800">
-                        <label class="block font-bold text-slate-300">Penggantian Komponen Vital:</label>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
-                                <input type="checkbox" value="filterOli" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
-                                <span class="text-[11px] text-slate-200">Filter Oli</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
-                                <input type="checkbox" value="aki" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
-                                <span class="text-[11px] text-slate-200">Aki / Battery</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
-                                <input type="checkbox" value="oliMatic" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
-                                <span class="text-[11px] text-slate-200">Oli Transmisi</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
-                                <input type="checkbox" value="ban" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
-                                <span class="text-[11px] text-slate-200">Ban / Tires</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
-                                <input type="checkbox" value="oliGardan" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
-                                <span class="text-[11px] text-slate-200">Oli Gardan</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
-                                <input type="checkbox" value="ac" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
-                                <span class="text-[11px] text-slate-200">Sistem AC</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2 pt-2 border-t border-slate-800">
-                        <div class="flex justify-between items-center">
-                            <label class="font-bold text-slate-300 flex items-center gap-2">
-                                <span>Rincian Sparepart & Biaya</span>
-                                <span class="text-xs font-mono font-bold text-emerald-400 bg-emerald-950 px-2.5 py-0.5 rounded-lg border border-emerald-800/80 shadow-sm">
-                                    Total: Rp {{ logFormTotalCost.toLocaleString('id-ID') }}
-                                </span>
-                            </label>
-                            <button type="button" @click="addLogItem" class="text-sky-400 font-bold text-xs p-1">+ Tambah Item</button>
-                        </div>
-
-                        <datalist id="adminSparepartDatalist">
-                            <option v-for="sug in allSparepartSuggestions" :key="sug.name" :value="sug.name"></option>
-                        </datalist>
-
-                        <div class="flex flex-wrap gap-1 py-1">
-                            <span class="text-[10px] text-slate-400 self-center font-semibold">Saran:</span>
-                            <button type="button" v-for="sug in combinedQuickSuggestions.slice(0, 6)" :key="sug.name" @click="addQuickSparepart(sug)" class="px-2 py-1 bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded text-[10px] flex items-center gap-1 transition">
-                                + {{ sug.name }}
-                            </button>
-                        </div>
-
-                        <div v-for="(item, idx) in logForm.items" :key="idx" class="flex items-center gap-2">
-                            <input type="text" v-model="item.name" list="adminSparepartDatalist" placeholder="Nama sparepart..." required class="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white">
-                            <input type="number" v-model.number="item.cost" placeholder="Rp..." required min="0" class="w-24 sm:w-28 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-mono text-emerald-400 font-bold">
-                            <button type="button" @click="removeLogItem(idx)" class="text-rose-400 p-2 min-w-[36px]"><i class="fa-solid fa-trash-can"></i></button>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2 border-t border-slate-800">
-                        <button type="button" @click="modals.log = false" :disabled="isUploadingToDrive" class="w-full sm:w-auto px-4 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold min-h-[44px]">Batal</button>
-                        <button type="submit" :disabled="isUploadingToDrive" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl min-h-[44px] flex items-center justify-center gap-2">
-                            <i v-if="isUploadingToDrive" class="fa-solid fa-spinner fa-spin"></i>
-                            <span>{{ isUploadingToDrive ? 'Mengunggah & Menyimpan...' : 'Simpan Log Servis' }}</span>
-                        </button>
-                    </div>
-                </form>
+                <div class="pt-2 flex justify-end border-t border-slate-800">
+                    <button @click="modals.workshopDetail = false" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition active:scale-95">
+                        Tutup Rincian
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Confirm Modal -->
-        <div v-if="confirmModal.show" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-            <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl">
+        <!-- MODAL LOG (INPUT & EDIT TRANSAKSI) -->
+        <div v-if="modals.log" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div :class="previewSource ? 'md:max-w-5xl lg:max-w-6xl' : 'max-w-xl'" class="bg-slate-900 border border-slate-800 w-full rounded-2xl p-4 sm:p-6 space-y-4 my-auto max-h-[92vh] overflow-y-auto touch-scroll transition-all duration-300">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h3 class="font-bold text-white text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-amber-400"></i>
+                        <span>{{ logForm.id ? 'Edit Catatan Invoice Servis' : 'Input Catatan Invoice Servis Baru' }}</span>
+                    </h3>
+                    <button @click="modals.log = false" class="text-slate-400 hover:text-white p-2 active:scale-95"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+
+                <!-- 2-Column Responsive Layout -->
+                <div class="grid grid-cols-1" :class="{'md:grid-cols-12 md:gap-6': previewSource}">
+
+                    <!-- DESKTOP PREVIEW PANEL -->
+                    <div v-if="previewSource" class="hidden md:flex md:col-span-6 flex-col bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3 max-h-[78vh] overflow-hidden">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                            <span class="text-xs font-bold text-amber-400 flex items-center gap-2">
+                                <i class="fa-solid fa-eye text-sky-400"></i>
+                                <span>Preview Berkas Nota (Croscek AI)</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-mono truncate max-w-[180px] bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{{ previewSource.name }}</span>
+                        </div>
+
+                        <div class="flex-1 flex items-center justify-center overflow-auto rounded-xl bg-slate-900/60 p-2 border border-slate-800/80 touch-scroll">
+                            <img v-if="previewSource.type === 'image'" :src="previewSource.url" class="max-w-full max-h-[62vh] object-contain rounded-lg shadow-xl border border-slate-800" alt="Preview Foto Nota" />
+                            <iframe v-else-if="previewSource.type === 'pdf'" :src="previewSource.url" class="w-full h-[62vh] rounded-lg border-0 bg-white"></iframe>
+                            <iframe v-else-if="previewSource.type === 'iframe'" :src="previewSource.url" class="w-full h-[62vh] rounded-lg border-0 bg-slate-900" allow="autoplay"></iframe>
+                            <div v-else class="text-center p-6 space-y-3">
+                                <i class="fa-solid fa-file-pdf text-4xl text-emerald-400"></i>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-200">Berkas Terhubung di Google Drive</p>
+                                    <p class="text-[10px] text-slate-400">Klik tombol di bawah untuk melihat nota di tab terpisah</p>
+                                </div>
+                                <a :href="previewSource.url" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>Buka Dokumen Drive</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-slate-400 text-center font-mono bg-slate-900/80 py-1 rounded-lg border border-slate-800/80">
+                            💡 Gunakan preview di sebelah kiri untuk mencocokkan data rincian nota dengan form
+                        </div>
+                    </div>
+
+                    <!-- FORM COLUMN -->
+                    <div :class="previewSource ? 'md:col-span-6' : ''" class="space-y-4">
+                        
+                        <!-- MOBILE COMPACT PREVIEW CARD -->
+                        <div v-if="previewSource" class="block md:hidden bg-slate-950 border border-slate-800 p-3 rounded-xl space-y-2">
+                            <div class="flex items-center justify-between text-xs font-bold text-amber-400 border-b border-slate-800 pb-1.5">
+                                <span class="flex items-center gap-1.5">
+                                    <i class="fa-solid fa-file-image text-sky-400"></i>
+                                    <span>Preview Berkas Terpilih (Mobile)</span>
+                                </span>
+                                <span class="text-[10px] font-mono text-slate-400 truncate max-w-[120px]">{{ previewSource.name }}</span>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <div class="w-20 h-20 bg-slate-900 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center shrink-0">
+                                    <img v-if="previewSource.type === 'image'" :src="previewSource.url" class="w-full h-full object-cover" />
+                                    <i v-else class="fa-solid fa-file-pdf text-3xl text-emerald-400"></i>
+                                </div>
+                                <div class="flex-1 space-y-1 text-xs">
+                                    <p class="font-bold text-white text-[11px] truncate">{{ previewSource.name }}</p>
+                                    <p class="text-[10px] text-slate-400">
+                                        <span v-if="logForm.fileUrl" class="text-emerald-400 font-mono font-bold">✓ Diunggah ke Drive</span>
+                                        <span v-else class="text-amber-400 font-mono">⏳ Lokal (Otomatis Upload)</span>
+                                    </p>
+                                    <a v-if="logForm.fileUrl" :href="logForm.fileUrl" target="_blank" class="inline-flex items-center gap-1 text-[10px] text-sky-400 font-bold hover:underline">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka File Drive
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Gemini Vision OCR & Google Drive Auto Save Banner -->
+                        <div class="bg-slate-950 p-3 sm:p-3.5 rounded-xl border border-dashed border-sky-800/80 space-y-2">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-sky-400 text-lg shrink-0"></i>
+                                    <div>
+                                        <span class="text-xs text-slate-300 font-bold flex items-center gap-1.5 flex-wrap">
+                                            <span>AI Gemini Vision & Drive Upload</span>
+                                            <span class="bg-amber-950 text-amber-400 border-amber-800 text-[9px] border px-1.5 py-0.2 rounded font-mono font-bold">
+                                                ⚡ Auto Drive Sync
+                                            </span>
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 block">Ekstraksi AI otomatis mendeteksi Plat Nomor & unggah berkas ke Drive</span>
+                                    </div>
+                                </div>
+                                <label :class="(isScanningInvoice || isUploadingToDrive) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-sky-500'" class="w-full sm:w-auto px-3.5 py-2.5 bg-sky-600 text-white rounded-xl text-xs font-bold transition shrink-0 flex items-center justify-center gap-1.5 shadow active:scale-95 min-h-[42px]">
+                                    <i v-if="isScanningInvoice" class="fa-solid fa-circle-notch fa-spin"></i>
+                                    <i v-else class="fa-solid fa-camera"></i>
+                                    <span>{{ isScanningInvoice ? 'Scanning AI...' : 'Scan Foto / PDF Nota' }}</span>
+                                    <input type="file" accept="image/*,application/pdf" @change="handleInvoiceScan" :disabled="isScanningInvoice || isUploadingToDrive" class="hidden">
+                                </label>
+                            </div>
+
+                            <div v-if="scanStatusMessage" class="text-[11px] font-mono px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-sky-300 rounded-lg flex items-center justify-between gap-1.5">
+                                <span class="truncate"><i class="fa-solid fa-info-circle text-amber-400 mr-1"></i>{{ scanStatusMessage }}</span>
+                                <a v-if="logForm.fileUrl" :href="logForm.fileUrl" target="_blank" class="text-amber-400 hover:underline font-bold text-[10px] shrink-0">
+                                    [Buka Drive]
+                                </a>
+                            </div>
+                        </div>
+
+                        <form @submit.prevent="saveLog" class="space-y-3 text-xs">
+                            <div class="space-y-1 p-3 bg-slate-950 rounded-xl border border-slate-800/80">
+                                <label class="block font-bold text-slate-300 mb-1 flex items-center justify-between flex-wrap gap-1">
+                                    <span>Link Scan Nota (Google Drive URL):</span>
+                                    <span v-if="isUploadingToDrive" class="text-sky-400 font-mono text-[10px] animate-pulse">⏳ Mengunggah ke Drive...</span>
+                                    <span v-else-if="pendingUploadFile && !logForm.fileUrl" class="text-amber-400 font-mono text-[10px]">⏳ File lokal (siap upload saat simpan)</span>
+                                    <span v-else-if="logForm.fileUrl" class="text-emerald-400 font-mono text-[10px]">✓ Terhubung di Google Drive</span>
+                                </label>
+                                <div class="flex items-center gap-2">
+                                    <input type="url" v-model="logForm.fileUrl" placeholder="https://drive.google.com/file/d/..." class="flex-1 bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white font-mono text-xs focus:outline-none focus:border-emerald-500">
+                                    <label :class="isUploadingToDrive ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-emerald-600'" class="px-3 py-2.5 bg-emerald-700 text-white rounded-xl text-xs font-bold transition shrink-0 flex items-center justify-center gap-1.5 active:scale-95 min-h-[40px]">
+                                        <i class="fa-solid fa-file-arrow-up"></i>
+                                        <span>{{ pendingUploadFile ? 'Ganti File' : 'Pilih File' }}</span>
+                                        <input type="file" accept="image/*,application/pdf" @change="manualDriveUpload" :disabled="isUploadingToDrive" class="hidden">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-bold text-slate-300 mb-1 flex items-center justify-between">
+                                        <span>Armada Kendaraan *</span>
+                                        <span v-if="detectedPlateMatch" class="text-[10px] text-amber-400 font-mono font-bold bg-amber-950 px-1.5 py-0.2 rounded border border-amber-800">
+                                            ✓ AI: {{ detectedPlateMatch }}
+                                        </span>
+                                    </label>
+                                    <select v-model="logForm.vehicleId" @change="onLogFormVehicleChange" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-bold">
+                                        <option value="" disabled>-- Pilih Armada --</option>
+                                        <option v-for="car in vehicles" :key="car.id" :value="car.id">{{ car.plate }} - {{ car.model }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-300 mb-1">Bengkel Mitra *</label>
+                                    <select v-model="logForm.workshop" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-bold">
+                                        <option value="Nasmoco">Nasmoco</option>
+                                        <option value="Montecarlo">Montecarlo</option>
+                                        <option value="Zaini Auto">Zaini Auto</option>
+                                        <option value="Rekanan">Rekanan</option>
+                                        <option value="Bengkel Luar">Bengkel Luar</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-bold text-slate-300 mb-1">Tanggal Servis *</label>
+                                    <input type="date" v-model="logForm.date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-300 mb-1">Odometer (KM) *</label>
+                                    <input type="number" v-model.number="logForm.km" required min="0" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono font-bold text-sky-400">
+                                    <p class="text-[10px] text-slate-400 mt-1 flex items-center gap-1" v-if="getSelectedVehicleCurrentKm > 0">
+                                        <i class="fa-solid fa-circle-info text-sky-400"></i>
+                                        <span>Oddo tercatat: <strong class="text-sky-300 font-mono">{{ getSelectedVehicleCurrentKm.toLocaleString('id-ID') }} KM</strong></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-bold text-slate-300 mb-1">No. Invoice / Faktur</label>
+                                    <input type="text" v-model="logForm.invoiceNo" placeholder="Contoh: 17794 atau INV-9002" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono">
+                                    
+                                    <div v-if="liveDuplicateWarning" class="mt-1.5 p-2 bg-amber-950/90 border border-amber-800 rounded-lg text-[10px] text-amber-300 flex items-start gap-1.5">
+                                        <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5 shrink-0"></i>
+                                        <div>
+                                            <span class="font-bold block">Perhatian: No Invoice Sudah Ada!</span>
+                                            <span>Tercatat pada armada <strong>{{ liveDuplicateWarning.vehicleId }}</strong> tanggal {{ formatDateDisplay(liveDuplicateWarning.date) }}. Menyimpan akan memberikan opsi menimpa data atau simpan baru.</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-300 mb-1">Kategori Jenis Servis *</label>
+                                    <select v-model="logForm.isRoutine" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-bold">
+                                        <option :value="true">🟢 Servis Berkala Rutin (Reset Status)</option>
+                                        <option :value="false">🔵 Perbaikan Non-Rutin (Insidental)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                                <label class="block font-bold text-slate-300">Penggantian Komponen Vital:</label>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
+                                        <input type="checkbox" value="filterOli" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
+                                        <span class="text-[11px] text-slate-200">Filter Oli</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
+                                        <input type="checkbox" value="aki" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
+                                        <span class="text-[11px] text-slate-200">Aki / Battery</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
+                                        <input type="checkbox" value="oliMatic" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
+                                        <span class="text-[11px] text-slate-200">Oli Transmisi</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
+                                        <input type="checkbox" value="ban" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
+                                        <span class="text-[11px] text-slate-200">Ban / Tires</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
+                                        <input type="checkbox" value="oliGardan" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
+                                        <span class="text-[11px] text-slate-200">Oli Gardan</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
+                                        <input type="checkbox" value="ac" v-model="logForm.replacedComponents" class="w-4 h-4 accent-amber-500 rounded">
+                                        <span class="text-[11px] text-slate-200">Sistem AC</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 pt-2 border-t border-slate-800">
+                                <div class="flex justify-between items-center">
+                                    <label class="font-bold text-slate-300 flex items-center gap-2">
+                                        <span>Rincian Sparepart & Biaya</span>
+                                        <span class="text-xs font-mono font-bold text-emerald-400 bg-emerald-950 px-2.5 py-0.5 rounded-lg border border-emerald-800/80 shadow-sm">
+                                            Total: Rp {{ logFormTotalCost.toLocaleString('id-ID') }}
+                                        </span>
+                                    </label>
+                                    <button type="button" @click="addLogItem" class="text-sky-400 font-bold text-xs p-1">+ Tambah Item</button>
+                                </div>
+
+                                <datalist id="adminSparepartDatalist">
+                                    <option v-for="sug in allSparepartSuggestions" :key="sug.name" :value="sug.name"></option>
+                                </datalist>
+
+                                <div class="flex flex-wrap gap-1 py-1">
+                                    <span class="text-[10px] text-slate-400 self-center font-semibold">Saran Cepat:</span>
+                                    <button type="button" v-for="sug in combinedQuickSuggestions.slice(0, 6)" :key="sug.name" @click="addQuickSparepart(sug)" class="px-2 py-1 bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded text-[10px] flex items-center gap-1 transition">
+                                        + {{ sug.name }}
+                                    </button>
+                                </div>
+
+                                <div v-for="(item, idx) in logForm.items" :key="idx" class="flex items-center gap-2">
+                                    <input type="text" v-model="item.name" list="adminSparepartDatalist" placeholder="Nama sparepart / jasa..." required class="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white">
+                                    <input type="number" v-model.number="item.cost" placeholder="Rp..." required min="0" class="w-28 sm:w-32 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-mono text-emerald-400 font-bold">
+                                    <button type="button" @click="removeLogItem(idx)" class="text-rose-400 p-2 min-w-[36px]" title="Hapus Baris"><i class="fa-solid fa-trash-can"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2 border-t border-slate-800">
+                                <button type="button" @click="modals.log = false" :disabled="isUploadingToDrive || isSavingLog" class="w-full sm:w-auto px-4 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold min-h-[44px]">Batal</button>
+                                <button type="submit" :disabled="isUploadingToDrive || isSavingLog" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl min-h-[44px] flex items-center justify-center gap-2 shadow-lg shadow-emerald-950 active:scale-95">
+                                    <i v-if="isUploadingToDrive || isSavingLog" class="fa-solid fa-spinner fa-spin"></i>
+                                    <i v-else class="fa-solid fa-floppy-disk"></i>
+                                    <span>{{ isSavingLog ? 'Menyimpan...' : (isUploadingToDrive ? 'Mengunggah & Menyimpan...' : 'Simpan Log Servis') }}</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL KONFIRMASI (Z-[70] ALWAYS ON TOP) -->
+        <div v-if="confirmModal.show" class="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+            <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl">
                 <div class="text-center space-y-2">
-                    <div class="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center mx-auto text-xl border border-rose-500/20">
+                    <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-xl border border-amber-500/20 shadow-inner">
                         <i class="fa-solid fa-triangle-exclamation"></i>
                     </div>
                     <h3 class="font-bold text-white text-base">{{ confirmModal.title }}</h3>
-                    <p class="text-xs text-slate-400">{{ confirmModal.message }}</p>
+                    <p class="text-xs text-slate-300 leading-relaxed whitespace-pre-line text-left bg-slate-950 p-3 rounded-xl border border-slate-800">{{ confirmModal.message }}</p>
                 </div>
-                <div class="flex items-center gap-2 pt-2">
-                    <button @click="closeConfirmModal(false)" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition min-h-[42px]">Batal</button>
-                    <button @click="closeConfirmModal(true)" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs transition min-h-[42px]">Ya, Lanjutkan</button>
+                <div class="flex flex-col sm:flex-row items-center gap-2 pt-2">
+                    <button @click="closeConfirmModal(false)" class="w-full sm:flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition min-h-[42px]">
+                        {{ confirmModal.cancelText || 'Batal' }}
+                    </button>
+                    <button v-if="confirmModal.extraAction" @click="triggerExtraConfirmAction" class="w-full sm:flex-1 py-2.5 bg-sky-700 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition min-h-[42px]">
+                        {{ confirmModal.extraText || 'Simpan Baru' }}
+                    </button>
+                    <button @click="closeConfirmModal(true)" class="w-full sm:flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition min-h-[42px]">
+                        {{ confirmModal.confirmText || 'Ya, Lanjutkan' }}
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Floating Toast -->
-        <div v-if="toast.show" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 z-50 bg-amber-500 text-slate-950 px-4 py-3 rounded-xl font-bold text-xs sm:text-sm shadow-2xl flex items-center gap-2 max-w-md mx-auto sm:mx-0">
+        <!-- Floating Toast Notification -->
+        <div v-if="toast.show" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 z-[80] bg-amber-500 text-slate-950 px-4 py-3 rounded-xl font-bold text-xs sm:text-sm shadow-2xl flex items-center gap-2 max-w-md mx-auto sm:mx-0">
             <i class="fa-solid fa-circle-check text-base"></i>
             <span>{{ toast.message }}</span>
         </div>
 
-    </div>
+    </div> <!-- END OF #app -->
 
+    <!-- JAVASCRIPT LOGIC & FIREBASE INTEGRATION -->
     <script type="module">
+        import { createApp } from "https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.esm-browser.prod.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
-        const { createApp } = window.Vue;
 
         const rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'uns-fleet-service';
         const appId = String(rawAppId).replace(/[\/\.\#\$\[\]]/g, '_');
@@ -1323,13 +1503,14 @@
 
         const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-        createApp({
+        const vueApp = createApp({
             data() {
                 return {
                     isAuthenticated: false,
+                    emailInput: '',
                     passwordInput: '',
-                    adminPassword: 'ANDA321',
-                    newPassword: '',
+                    isLoggingIn: false,
+                    isSavingLog: false,
                     currentTab: 'overview',
                     cloudStatus: 'loading',
                     searchVehicle: '',
@@ -1340,6 +1521,7 @@
                     isUploadingToDrive: false,
                     isTestingKeys: false,
                     scanStatusMessage: '',
+                    detectedPlateMatch: '',
                     isSheetsSyncing: false,
                     sheetsReadResult: null,
                     keyUsageStats: {},
@@ -1349,6 +1531,7 @@
                     logMonthFilter: 'ALL',
                     logYearFilter: 'ALL',
                     logSortOption: 'DATE_DESC',
+                    mobileDisplayLimit: 15,
                     quickSparepartSuggestions: [
                         { name: 'Oli Mesin 0W-20 TGO Full Synthetic', cost: 450000 },
                         { name: 'Oli Mesin 5W-30 Synthetic', cost: 400000 },
@@ -1365,6 +1548,7 @@
                     vehicles: [],
                     serviceLogs: [],
                     selectedLog: null,
+                    selectedWorkshopDetail: null,
                     settings: {
                         geminiApiKey: '',
                         telegramBotToken: '',
@@ -1377,13 +1561,18 @@
                         show: false,
                         title: '',
                         message: '',
-                        onConfirm: null
+                        confirmText: 'Ya, Lanjutkan',
+                        cancelText: 'Batal',
+                        extraText: '',
+                        onConfirm: null,
+                        onExtra: null
                     },
                     modals: {
                         vehicle: false,
                         updateKm: false,
                         log: false,
-                        invoice: false
+                        invoice: false,
+                        workshopDetail: false
                     },
                     vehicleForm: {
                         id: null,
@@ -1416,7 +1605,50 @@
             computed: {
                 logFormTotalCost() {
                     if (!this.logForm || !this.logForm.items || !Array.isArray(this.logForm.items)) return 0;
-                    return this.logForm.items.reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
+                    return this.logForm.items.reduce((sum, item) => sum + (Number(item?.cost) || 0), 0);
+                },
+                previewSource() {
+                    if (this.pendingUploadFile && this.pendingUploadFile.base64Data) {
+                        const mime = this.pendingUploadFile.mimeType || 'image/jpeg';
+                        return {
+                            type: mime.includes('pdf') ? 'pdf' : 'image',
+                            url: `data:${mime};base64,${this.pendingUploadFile.base64Data}`,
+                            name: this.pendingUploadFile.fileName || 'Nota Servis'
+                        };
+                    }
+                    if (this.logForm && this.logForm.fileUrl) {
+                        let url = String(this.logForm.fileUrl).trim();
+                        if (url.includes('drive.google.com') && url.includes('/file/d/')) {
+                            url = url.replace(/\/view.*$/, '/preview');
+                            return {
+                                type: 'iframe',
+                                url: url,
+                                name: 'Google Drive Document'
+                            };
+                        }
+                        if (url.startsWith('http://') || url.startsWith('https://')) {
+                            return {
+                                type: 'link',
+                                url: url,
+                                name: 'Tautan Google Drive'
+                            };
+                        }
+                    }
+                    return null;
+                },
+                getSelectedVehicleCurrentKm() {
+                    const car = (this.vehicles || []).find(v => v.id === this.logForm?.vehicleId || v.plate === this.logForm?.vehicleId);
+                    return car ? (Number(car.currentKm) || 0) : 0;
+                },
+                liveDuplicateWarning() {
+                    if (!this.logForm || !this.logForm.invoiceNo) return null;
+                    const cleanInv = this.normalizeInvoice(this.logForm.invoiceNo);
+                    if (!cleanInv) return null;
+
+                    return (this.serviceLogs || []).find(l => 
+                        l.id !== this.logForm.id && 
+                        this.normalizeInvoice(l.invoiceNo) === cleanInv
+                    ) || null;
                 },
                 allSparepartSuggestions() {
                     const counts = new Map();
@@ -1427,7 +1659,7 @@
                         this.serviceLogs.forEach(l => {
                             const items = this.normalizeArray(l.items);
                             items.forEach(it => {
-                                if (it && it.name && String(it.name).trim()) {
+                                if (it && typeof it === 'object' && it.name && String(it.name).trim()) {
                                     const cleanName = String(it.name).trim();
                                     const key = cleanName.toLowerCase();
                                     const costNum = Number(it.cost) || 0;
@@ -1448,19 +1680,19 @@
                     return [...this.allSparepartSuggestions].sort((a, b) => b.count - a.count).slice(0, 12);
                 },
                 pendingApprovalsCount() {
-                    return this.vehicles.filter(v => v.isUnderService).length;
+                    return (this.vehicles || []).filter(v => v.isUnderService).length;
                 },
                 inServiceVehicles() {
-                    return this.vehicles.filter(v => v.isUnderService);
+                    return (this.vehicles || []).filter(v => v.isUnderService);
                 },
                 expiredCount() {
-                    return this.vehicles.filter(v => {
+                    return (this.vehicles || []).filter(v => {
                         const diff = (Number(v.currentKm) || 0) - (Number(v.lastServiceKm) || 0);
                         return diff >= 7000;
                     }).length;
                 },
                 totalSpending() {
-                    return this.serviceLogs.reduce((sum, l) => sum + (Number(l.totalCost) || 0), 0);
+                    return (this.serviceLogs || []).reduce((sum, l) => sum + (Number(l.totalCost) || 0), 0);
                 },
                 filteredServiceLogs() {
                     let logs = [...(this.serviceLogs || [])];
@@ -1506,13 +1738,19 @@
 
                     return logs;
                 },
+                paginatedServiceLogs() {
+                    return this.filteredServiceLogs.slice(0, this.mobileDisplayLimit);
+                },
+                hasMoreLogs() {
+                    return this.filteredServiceLogs.length > this.mobileDisplayLimit;
+                },
                 filteredLogsSubtotal() {
                     return this.filteredServiceLogs.reduce((acc, curr) => acc + (Number(curr.totalCost) || 0), 0);
                 },
                 filteredVehiclesList() {
-                    if (!this.searchVehicle) return this.vehicles;
+                    if (!this.searchVehicle) return this.vehicles || [];
                     const q = this.searchVehicle.toLowerCase();
-                    return this.vehicles.filter(v => 
+                    return (this.vehicles || []).filter(v => 
                         (v.plate && v.plate.toLowerCase().includes(q)) ||
                         (v.model && v.model.toLowerCase().includes(q)) ||
                         (v.driver && v.driver.toLowerCase().includes(q))
@@ -1520,7 +1758,7 @@
                 },
                 workshopDistribution() {
                     const map = {};
-                    this.serviceLogs.forEach(l => {
+                    (this.serviceLogs || []).forEach(l => {
                         const ws = l.workshop || 'Bengkel Luar';
                         if (!map[ws]) map[ws] = { name: ws, count: 0, total: 0 };
                         map[ws].count++;
@@ -1530,10 +1768,10 @@
                 },
                 topSpendVehicles() {
                     const map = {};
-                    this.vehicles.forEach(v => {
+                    (this.vehicles || []).forEach(v => {
                         map[v.id] = { plate: v.plate, model: v.model, driver: v.driver, totalCost: 0 };
                     });
-                    this.serviceLogs.forEach(l => {
+                    (this.serviceLogs || []).forEach(l => {
                         if (map[l.vehicleId]) {
                             map[l.vehicleId].totalCost += (Number(l.totalCost) || 0);
                         }
@@ -1563,10 +1801,9 @@
                     return this.totalSpjPkp + this.totalSpjNonPkp;
                 },
                 upcomingPeriodicServices() {
-                    return this.vehicles.map(v => {
+                    return (this.vehicles || []).map(v => {
                         let lastDate = v.lastServiceDate || '';
                         
-                        // Strict Filter: Routine service logs ONLY (isRoutine !== false)
                         const routineLogs = (this.serviceLogs || []).filter(l => 
                             (l.vehicleId === v.id || l.vehicleId === v.plate) && l.isRoutine !== false
                         );
@@ -1633,17 +1870,78 @@
                     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdfjs-dist/3.11.174/pdf.worker.min.js';
                 }
 
-                signInAnonymously(auth).then(() => {
-                    this.initRealtimeSync();
+                // Listen Auth State via Firebase Auth
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        this.isAuthenticated = true;
+                        this.initRealtimeSync();
+                    } else {
+                        this.isAuthenticated = false;
+                        this.cloudStatus = 'offline';
+                    }
                 });
             },
 
             methods: {
+                resetLogPagination() {
+                    this.mobileDisplayLimit = 15;
+                },
+                loadMoreLogs() {
+                    this.mobileDisplayLimit += 15;
+                },
+                async login() {
+                    if (!this.emailInput || !this.passwordInput) {
+                        this.showToast('Email dan Password wajib diisi!');
+                        return;
+                    }
+                    this.isLoggingIn = true;
+                    try {
+                        await signInWithEmailAndPassword(auth, this.emailInput, this.passwordInput);
+                        this.showToast('Selamat Datang di Portal Admin Master!');
+                        this.emailInput = '';
+                        this.passwordInput = '';
+                    } catch (error) {
+                        console.error("Firebase Login Error:", error);
+                        let msg = 'Gagal login. Periksa email dan password Anda.';
+                        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                            msg = 'Email atau password salah!';
+                        } else if (error.code === 'auth/invalid-email') {
+                            msg = 'Format alamat email tidak valid!';
+                        } else if (error.code === 'auth/too-many-requests') {
+                            msg = 'Terlalu banyak percobaan. Silakan coba lagi nanti.';
+                        }
+                        this.showToast(msg);
+                    } finally {
+                        this.isLoggingIn = false;
+                    }
+                },
+                async logout() {
+                    try {
+                        await signOut(auth);
+                        this.isAuthenticated = false;
+                        this.emailInput = '';
+                        this.passwordInput = '';
+                        this.showToast('Berhasil keluar dari sistem.');
+                    } catch (error) {
+                        console.error("Logout error:", error);
+                    }
+                },
                 normalizeArray(val) {
                     if (!val) return [];
                     if (Array.isArray(val)) return val;
                     if (typeof val === 'object') return Object.values(val);
                     return [];
+                },
+                normalizeInvoice(str) {
+                    return String(str || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                },
+                getVehicleModel(vehicleId) {
+                    const car = (this.vehicles || []).find(v => v.id === vehicleId || v.plate === vehicleId);
+                    return car ? car.model : 'Kendaraan Operasional';
+                },
+                getVehicleDriver(vehicleId) {
+                    const car = (this.vehicles || []).find(v => v.id === vehicleId || v.plate === vehicleId);
+                    return car && car.driver ? car.driver : 'Pengemudi UNS';
                 },
                 getLastServiceDate(car) {
                     if (!car) return '-';
@@ -1679,14 +1977,20 @@
                     this.toast = { show: true, message: msg };
                     setTimeout(() => { this.toast.show = false; }, 3500);
                 },
-                askConfirmation(title, message, onConfirm) {
-                    this.confirmModal = { show: true, title, message, onConfirm };
+                askConfirmation(title, message, onConfirm, confirmText = 'Ya, Lanjutkan', cancelText = 'Batal', onExtra = null, extraText = '') {
+                    this.confirmModal = { show: true, title, message, confirmText, cancelText, extraText, onConfirm, onExtra };
                 },
                 closeConfirmModal(isConfirmed) {
                     if (isConfirmed && typeof this.confirmModal.onConfirm === 'function') {
                         this.confirmModal.onConfirm();
                     }
-                    this.confirmModal = { show: false, title: '', message: '', onConfirm: null };
+                    this.confirmModal = { show: false, title: '', message: '', confirmText: 'Ya, Lanjutkan', cancelText: 'Batal', extraText: '', onConfirm: null, onExtra: null };
+                },
+                triggerExtraConfirmAction() {
+                    if (typeof this.confirmModal.onExtra === 'function') {
+                        this.confirmModal.onExtra();
+                    }
+                    this.confirmModal = { show: false, title: '', message: '', confirmText: 'Ya, Lanjutkan', cancelText: 'Batal', extraText: '', onConfirm: null, onExtra: null };
                 },
                 formatDateDisplay(dateStr) {
                     const d = this.parseLocalDate(dateStr);
@@ -1696,33 +2000,48 @@
                     const year = d.getFullYear();
                     return `${day}-${month}-${year}`;
                 },
+                formatStandardIsoDate(dateStr) {
+                    const d = this.parseLocalDate(dateStr);
+                    if (!d) return new Date().toISOString().substring(0, 10);
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                },
                 parseLocalDate(dateStr) {
                     if (!dateStr) return null;
                     if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? null : dateStr;
                     let s = String(dateStr).trim();
                     if (!s) return null;
-                    if (s.match(/^\d{2}-\d{2}-\d{4}$/)) {
-                        const parts = s.split('-');
-                        return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-                    } else if (s.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                        const parts = s.split('-');
+                    
+                    // Format YYYY-MM-DD
+                    if (s.match(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/)) {
+                        const cleanS = s.substring(0, 10);
+                        const parts = cleanS.split(/[-\/]/);
                         return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
                     }
+                    // Format MM/DD/YYYY (USA format)
+                    if (s.match(/^\d{1,2}[\/]\d{1,2}[\/]\d{4}$/)) {
+                        const parts = s.split(/[\/]/);
+                        const p0 = Number(parts[0]);
+                        const p1 = Number(parts[1]);
+                        const p2 = Number(parts[2]);
+                        if (p0 > 12 && p1 <= 12) { // DD/MM/YYYY
+                            return new Date(p2, p1 - 1, p0);
+                        } else { // MM/DD/YYYY
+                            return new Date(p2, p0 - 1, p1);
+                        }
+                    }
+                    // Format DD-MM-YYYY
+                    if (s.match(/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/)) {
+                        const parts = s.split(/[-\/]/);
+                        return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+                    } 
+                    
                     const d = new Date(s);
                     return isNaN(d.getTime()) ? null : d;
                 },
-                login() {
-                    if (this.passwordInput === this.adminPassword) {
-                        this.isAuthenticated = true;
-                        this.showToast('Selamat Datang di Portal Admin Master!');
-                    } else {
-                        this.showToast('Password Admin Master Salah!');
-                    }
-                },
-                logout() {
-                    this.isAuthenticated = false;
-                    this.passwordInput = '';
-                },
+
                 initRealtimeSync() {
                     const vRef = ref(db, `artifacts/${appId}/public/data/vehicles`);
                     const lRef = ref(db, `artifacts/${appId}/public/data/logs`);
@@ -1742,7 +2061,6 @@
                     onValue(sRef, (snap) => {
                         const data = snap.val();
                         if (data) {
-                            if (data.adminPassword) this.adminPassword = data.adminPassword;
                             if (data.geminiApiKey) this.settings.geminiApiKey = data.geminiApiKey;
                             if (data.telegramBotToken) this.settings.telegramBotToken = data.telegramBotToken;
                             if (data.telegramChatId) this.settings.telegramChatId = data.telegramChatId;
@@ -1775,7 +2093,7 @@
                         currentKm: Number(this.vehicleForm.currentKm) || 0,
                         isUnderService: false
                     };
-                    const existing = this.vehicles.find(v => v.id === vehicleId);
+                    const existing = (this.vehicles || []).find(v => v.id === vehicleId || v.plate === plateUpper);
                     if (existing) {
                         vehicleData.lastServiceKm = existing.lastServiceKm || 0;
                         vehicleData.lastServiceDate = existing.lastServiceDate || '';
@@ -1809,7 +2127,7 @@
                     if (car) {
                         this.updateKmForm.vehicleId = car.id;
                         this.updateKmForm.newKm = Number(car.currentKm) || 0;
-                    } else if (this.vehicles.length > 0) {
+                    } else if (this.vehicles && this.vehicles.length > 0) {
                         this.updateKmForm.vehicleId = this.vehicles[0].id;
                         this.updateKmForm.newKm = Number(this.vehicles[0].currentKm) || 0;
                     } else {
@@ -1819,13 +2137,13 @@
                     this.modals.updateKm = true;
                 },
                 onUpdateKmCarChange() {
-                    const car = this.vehicles.find(v => v.id === this.updateKmForm.vehicleId);
+                    const car = (this.vehicles || []).find(v => v.id === this.updateKmForm.vehicleId);
                     if (car) {
                         this.updateKmForm.newKm = Number(car.currentKm) || 0;
                     }
                 },
                 async saveUpdateKm() {
-                    const car = this.vehicles.find(v => v.id === this.updateKmForm.vehicleId);
+                    const car = (this.vehicles || []).find(v => v.id === this.updateKmForm.vehicleId);
                     if (car) {
                         car.currentKm = Number(this.updateKmForm.newKm) || 0;
                         await set(ref(db, `artifacts/${appId}/public/data/vehicles/${car.id}`), car);
@@ -1836,6 +2154,7 @@
                     }
                     this.modals.updateKm = false;
                 },
+
                 getComponentNameLabel(key) {
                     if (!key) return '';
                     const map = { filterOli: 'Filter Oli', aki: 'Aki / Battery', oliMatic: 'Oli Transmisi', ban: 'Ban', oliGardan: 'Oli Gardan', ac: 'Sistem AC' };
@@ -1843,30 +2162,33 @@
                 },
                 openProcessInvoiceModal(car) {
                     this.pendingUploadFile = null;
+                    this.detectedPlateMatch = '';
                     this.logForm = {
                         id: null,
                         vehicleId: car.id,
                         workshop: car.targetWorkshop || 'Nasmoco',
-                        date: car.inServiceDate || new Date().toISOString().substring(0, 10),
-                        km: car.currentKm || 0,
-                        invoiceNo: 'INV-' + Math.floor(Math.random() * 90000 + 10000),
+                        date: this.formatStandardIsoDate(car.inServiceDate || new Date()),
+                        km: Number(car.currentKm) || 0,
+                        invoiceNo: '',
                         isRoutine: true,
                         fileUrl: '',
                         fileName: '',
                         replacedComponents: [],
-                        items: [{ name: car.inServiceNotes || 'Servis Berkala', cost: 500000 }]
+                        items: [{ name: car.inServiceNotes || 'Servis Berkala & Maintenance', cost: 0 }]
                     };
                     this.scanStatusMessage = '';
                     this.modals.log = true;
                 },
                 openCreateLogModal() {
                     this.pendingUploadFile = null;
+                    this.detectedPlateMatch = '';
+                    const initialCar = (this.vehicles && this.vehicles.length) ? this.vehicles[0] : null;
                     this.logForm = {
                         id: null,
-                        vehicleId: this.vehicles.length ? this.vehicles[0].id : '',
+                        vehicleId: initialCar ? initialCar.id : '',
                         workshop: 'Nasmoco',
                         date: new Date().toISOString().substring(0, 10),
-                        km: 0,
+                        km: initialCar ? (Number(initialCar.currentKm) || 0) : 0,
                         invoiceNo: '',
                         isRoutine: true,
                         fileUrl: '',
@@ -1877,25 +2199,54 @@
                     this.scanStatusMessage = '';
                     this.modals.log = true;
                 },
+                onLogFormVehicleChange() {
+                    const selectedCar = (this.vehicles || []).find(v => v.id === this.logForm.vehicleId);
+                    if (selectedCar) {
+                        if (!this.logForm.km || Number(this.logForm.km) === 0) {
+                            this.logForm.km = Number(selectedCar.currentKm) || 0;
+                        }
+                    }
+                },
                 openEditLogModal(log) {
                     this.pendingUploadFile = null;
+                    this.detectedPlateMatch = '';
                     const rawItems = this.normalizeArray(log.items);
                     const rawComponents = this.normalizeArray(log.replacedComponents);
                     this.logForm = {
                         id: log.id,
-                        vehicleId: log.vehicleId,
+                        vehicleId: log.vehicleId || '',
                         workshop: log.workshop || 'Nasmoco',
-                        date: log.date || new Date().toISOString().substring(0, 10),
-                        km: log.km || 0,
+                        date: this.formatStandardIsoDate(log.date || new Date()),
+                        km: Number(log.km) || 0,
                         invoiceNo: log.invoiceNo || '',
                         isRoutine: log.isRoutine !== false,
                         fileUrl: log.fileUrl || '',
                         fileName: log.fileName || '',
                         replacedComponents: [...rawComponents],
-                        items: rawItems.length > 0 ? rawItems.map(i => ({ name: i.name || '', cost: Number(i.cost) || 0 })) : [{ name: '', cost: 0 }]
+                        items: rawItems.length > 0 ? rawItems.map(i => ({ name: (i && typeof i === 'object' ? i.name : String(i)) || '', cost: (i && typeof i === 'object' ? Number(i.cost) : 0) || 0 })) : [{ name: '', cost: 0 }]
                     };
                     this.scanStatusMessage = '';
                     this.modals.log = true;
+                },
+                openWorkshopDetailModal(month, year, workshopName) {
+                    const logs = (this.serviceLogs || []).filter(l => {
+                        if (!l.date) return false;
+                        const d = this.parseLocalDate(l.date);
+                        const matchDate = d && (d.getMonth() + 1) === month && d.getFullYear() === Number(year);
+                        const matchWs = String(l.workshop || '').toLowerCase().trim() === String(workshopName).toLowerCase().trim();
+                        return matchDate && matchWs;
+                    });
+
+                    const totalCost = logs.reduce((sum, l) => sum + (Number(l.totalCost) || 0), 0);
+
+                    this.selectedWorkshopDetail = {
+                        month,
+                        year,
+                        workshopName,
+                        logs,
+                        totalCost
+                    };
+                    this.modals.workshopDetail = true;
                 },
                 addLogItem() {
                     if (!this.logForm.items) this.logForm.items = [];
@@ -1914,6 +2265,7 @@
                     }
                     this.logForm.items.push({ name: sug.name, cost: Number(sug.cost) || 0 });
                 },
+
                 getGeminiKeys() {
                     const raw = this.settings.geminiApiKey || '';
                     if (!raw.trim()) return [];
@@ -1950,6 +2302,7 @@
                     return 'fa-circle-question';
                 },
                 recordKeyUsage(key, tokens = 180, status = 'HEALTHY') {
+                    if (!key) return;
                     if (!this.keyUsageStats[key]) {
                         this.keyUsageStats[key] = { callsToday: 0, totalTokens: 0, status: 'UNTESTED' };
                     }
@@ -1980,10 +2333,7 @@
                                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${cleanKey}`;
                                 const res = await fetch(apiUrl, {
                                     method: 'POST',
-                                    headers: { 
-                                        'Content-Type': 'application/json',
-                                        'x-goog-api-key': cleanKey
-                                    },
+                                    headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({
                                         contents: [{ parts: [{ text: "ping" }] }],
                                         generationConfig: { maxOutputTokens: 1 }
@@ -2004,7 +2354,7 @@
                             } catch (err) {
                                 console.warn(`Test model ${modelName} failed for key #${index + 1}`, err);
                             }
-                            await sleep(800);
+                            await sleep(500);
                         }
 
                         if (!testedOk) {
@@ -2032,9 +2382,8 @@
                 },
 
                 async uploadFileToGoogleDrive(base64Data, mimeType, fileName) {
-                    if (!this.settings.sheetsWebhookUrl) {
-                        this.showToast('⚠️ Webhook Google Apps Script belum diisi di Pengaturan.');
-                        this.scanStatusMessage = 'URL Apps Script belum dikonfigurasi di Pengaturan.';
+                    const webhookUrl = String(this.settings.sheetsWebhookUrl || '').trim();
+                    if (!webhookUrl) {
                         return null;
                     }
 
@@ -2053,7 +2402,7 @@
                             date: this.logForm.date || new Date().toISOString().substring(0, 10)
                         };
 
-                        const res = await fetch(this.settings.sheetsWebhookUrl, {
+                        const res = await fetch(webhookUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify(payload)
@@ -2072,20 +2421,14 @@
                                 this.logForm.fileUrl = data.fileUrl;
                                 this.logForm.fileName = fileName;
                                 this.scanStatusMessage = '✅ Berkas tersimpan di Google Drive!';
-                                this.showToast('📁 Berkas nota berhasil diunggah ke Google Drive!');
                                 return data.fileUrl;
                             } else if (data.message) {
                                 throw new Error(data.message);
-                            } else {
-                                throw new Error('Respon Apps Script tidak mengembalikan URL file.');
                             }
-                        } else {
-                            throw new Error(`HTTP Status Error: ${res.status}`);
                         }
                     } catch (err) {
                         console.error("Gagal mengunggah ke Google Drive:", err);
                         this.scanStatusMessage = `⚠️ Gagal Upload Drive: ${err.message}`;
-                        this.showToast(`⚠️ Gagal Upload Google Drive: ${err.message}`);
                     } finally {
                         this.isUploadingToDrive = false;
                     }
@@ -2097,22 +2440,29 @@
                     if (!file) return;
 
                     try {
-                        const base64Data = await new Promise((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                const res = reader.result;
-                                const b64 = res.substring(res.indexOf(',') + 1).replace(/[\r\n\s]/g, '');
-                                resolve(b64);
-                            };
-                            reader.onerror = error => reject(error);
-                            reader.readAsDataURL(file);
-                        });
+                        let base64Data = '';
+                        let mimeType = file.type || 'image/jpeg';
 
-                        let mimeType = file.type;
-                        if (!mimeType || mimeType === '') {
-                            if (file.name.toLowerCase().endsWith('.pdf')) mimeType = 'application/pdf';
-                            else if (file.name.toLowerCase().endsWith('.png')) mimeType = 'image/png';
-                            else mimeType = 'image/jpeg';
+                        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                            mimeType = 'application/pdf';
+                            const arrayBuffer = await file.arrayBuffer();
+                            const bytes = new Uint8Array(arrayBuffer);
+                            let binary = '';
+                            for (let i = 0; i < bytes.byteLength; i++) {
+                                binary += String.fromCharCode(bytes[i]);
+                            }
+                            base64Data = btoa(binary);
+                        } else {
+                            base64Data = await new Promise((resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                    const res = reader.result;
+                                    const b64 = res.substring(res.indexOf(',') + 1).replace(/[\r\n\s]/g, '');
+                                    resolve(b64);
+                                };
+                                reader.onerror = error => reject(error);
+                                reader.readAsDataURL(file);
+                            });
                         }
 
                         this.pendingUploadFile = {
@@ -2121,8 +2471,14 @@
                             fileName: file.name
                         };
                         this.logForm.fileName = file.name;
-                        this.scanStatusMessage = `📁 File "${file.name}" terpilih (akan diunggah ke Drive saat Simpan Log Servis).`;
-                        this.showToast('📁 File terpilih! Berkas akan diunggah ke Drive saat disimpan.');
+
+                        // Auto Upload to Google Drive if configured
+                        if (this.settings.sheetsWebhookUrl) {
+                            await this.uploadFileToGoogleDrive(base64Data, mimeType, file.name);
+                        } else {
+                            this.scanStatusMessage = `📁 File "${file.name}" terpilih.`;
+                            this.showToast('📁 File berhasil dipilih!');
+                        }
                     } catch (e) {
                         this.showToast('Gagal membaca file: ' + e.message);
                     } finally {
@@ -2134,39 +2490,55 @@
                     const file = event.target.files[0];
                     if (!file) return;
 
-                    const apiKeys = this.getGeminiKeys();
-                    if (apiKeys.length === 0) {
-                        this.showToast('Isi setidaknya 1 Gemini API Key di menu Pengaturan!');
-                        return;
-                    }
-
                     this.isScanningInvoice = true;
-                    this.scanStatusMessage = 'Membaca berkas & menyiapkan AI Gemini Vision...';
+                    this.scanStatusMessage = 'Membaca berkas & menyiapkan AI OCR Vision...';
+                    this.detectedPlateMatch = '';
 
                     try {
-                        const base64Data = await new Promise((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                const res = reader.result;
-                                const b64 = res.substring(res.indexOf(',') + 1).replace(/[\r\n\s]/g, '');
-                                resolve(b64);
-                            };
-                            reader.onerror = error => reject(error);
-                            reader.readAsDataURL(file);
-                        });
+                        let base64Data = '';
+                        let mimeType = file.type || 'image/jpeg';
+                        let isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
-                        let mimeType = file.type;
-                        if (!mimeType || mimeType === '') {
-                            if (file.name.toLowerCase().endsWith('.pdf')) {
-                                mimeType = 'application/pdf';
-                            } else if (file.name.toLowerCase().endsWith('.png')) {
-                                mimeType = 'image/png';
-                            } else {
+                        // Convert PDF first page to JPEG Image via PDF.js for 100% reliable Vision OCR
+                        if (isPdf && window.pdfjsLib) {
+                            try {
+                                this.scanStatusMessage = 'Mengonversi halaman PDF nota ke gambar presisi tinggi...';
+                                const arrayBuffer = await file.arrayBuffer();
+                                const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                                const page = await pdf.getPage(1);
+                                const viewport = page.getViewport({ scale: 2.0 });
+                                const canvas = document.createElement('canvas');
+                                canvas.width = viewport.width;
+                                canvas.height = viewport.height;
+                                const ctx = canvas.getContext('2d');
+                                await page.render({ canvasContext: ctx, viewport }).promise;
+                                const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                                base64Data = dataUrl.split(',')[1];
                                 mimeType = 'image/jpeg';
+                            } catch (pdfErr) {
+                                console.warn("PDF render fallback to direct base64:", pdfErr);
+                                const arrayBuffer = await file.arrayBuffer();
+                                const bytes = new Uint8Array(arrayBuffer);
+                                let binary = '';
+                                for (let i = 0; i < bytes.byteLength; i++) {
+                                    binary += String.fromCharCode(bytes[i]);
+                                }
+                                base64Data = btoa(binary);
+                                mimeType = 'application/pdf';
                             }
+                        } else {
+                            base64Data = await new Promise((resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                    const res = reader.result;
+                                    const b64 = res.substring(res.indexOf(',') + 1).replace(/[\r\n\s]/g, '');
+                                    resolve(b64);
+                                };
+                                reader.onerror = error => reject(error);
+                                reader.readAsDataURL(file);
+                            });
                         }
 
-                        // Simpan file ke penampungan sementara
                         this.pendingUploadFile = {
                             base64Data,
                             mimeType,
@@ -2174,19 +2546,25 @@
                         };
                         this.logForm.fileName = file.name;
 
-                        const systemPrompt = "Anda adalah AI OCR Vision berpengalaman khusus mengekstrak data dari dokumen PDF atau foto nota/invoice/faktur/kwitansi perbaikan dan pemeliharaan kendaraan bengkel (mobil/motor). Analisis berkas dengan teliti, baca seluruh baris item, harga, tanggal, nomor nota, dan nama bengkel.";
+                        if (this.settings.sheetsWebhookUrl) {
+                            this.uploadFileToGoogleDrive(base64Data, mimeType, file.name).catch(err => {
+                                console.warn("Background drive upload note:", err);
+                            });
+                        }
+
+                        const systemPrompt = "Anda adalah AI OCR Vision bengkel profesional. Analisis foto/dokumen nota atau invoice dengan sangat teliti dan ekstrak seluruh baris data ke format JSON murni terstruktur.";
 
                         const knownPlatesStr = (this.vehicles || []).map(v => `${v.plate || v.id} (${v.model || ''})`).join(', ');
 
-                        const userPrompt = `Analisis foto atau dokumen PDF nota/kwitansi bengkel ini secara detail.
+                        const userPrompt = `Analisis foto atau dokumen nota/kwitansi bengkel ini secara detail.
 Ekstrak informasi berikut ke dalam format JSON:
-1. invoiceNo: Nomor invoice/faktur/nota (string, e.g. "INV-1234"). Kosongkan jika tidak ada.
-2. workshop: Nama bengkel (pilih paling sesuai dari: "Nasmoco", "Montecarlo", "Zaini Auto", "Rekanan", atau "Bengkel Luar").
-3. date: Tanggal transaksi dalam format "YYYY-MM-DD" (string). Jika hanya ada tanggal biasa, konversi ke format standar YYYY-MM-DD.
-4. km: Odometer/Kilometer kendaraan yang tercatat di nota (number, e.g. 45000). Set 0 jika tidak tertera.
-5. items: Array dari seluruh sparepart, oli, bahan, atau jasa perbaikan yang tercantum pada nota. Setiap item memiliki objek { "name": string, "cost": number }. Pastikan cost dalam satuan Rupiah angka murni tanpa titik/koma.
-6. replacedComponents: Array string komponen vital yang diganti. Pilih HANYA dari kunci berikut yang teridentifikasi diganti pada nota: "filterOli", "aki", "oliMatic", "ban", "oliGardan", "ac".
-7. plate: Plat nomor / Nomor Polisi kendaraan yang tertera di nota (string, e.g. "AD 8075 XA"). Daftar armada terdaftar di sistem: [${knownPlatesStr}]. Utamakan pencocokan dengan daftar armada tersebut jika tertera.`;
+1. invoiceNo: Nomor invoice/faktur/nota (string, e.g. "INV-1234", "17794"). Kosongkan jika tidak ada.
+2. workshop: Nama bengkel (pilih paling cocok: "Nasmoco", "Montecarlo", "Zaini Auto", "Rekanan", atau "Bengkel Luar").
+3. date: Tanggal transaksi (format "YYYY-MM-DD", e.g. "2026-08-27").
+4. km: Odometer/Kilometer kendaraan yang tercatat di nota (number). Set 0 jika tidak ada.
+5. items: Array dari seluruh sparepart, oli, bahan, atau jasa perbaikan yang tercantum pada nota. Format { "name": string, "cost": number }. Pastikan cost dalam angka murni tanpa koma/titik.
+6. replacedComponents: Array string komponen vital yang diganti. Pilih HANYA dari: ["filterOli", "aki", "oliMatic", "ban", "oliGardan", "ac"].
+7. plate: Plat nomor kendaraan yang tertera di nota (string, e.g. "AD 1214 XU"). Daftar armada terdaftar di sistem: [${knownPlatesStr}].`;
 
                         const payload = {
                             contents: [{
@@ -2205,55 +2583,30 @@ Ekstrak informasi berikut ke dalam format JSON:
                                 parts: [{ text: systemPrompt }]
                             },
                             generationConfig: {
-                                responseMimeType: "application/json",
-                                responseSchema: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        invoiceNo: { type: "STRING" },
-                                        workshop: { type: "STRING" },
-                                        date: { type: "STRING" },
-                                        km: { type: "NUMBER" },
-                                        plate: { type: "STRING" },
-                                        items: {
-                                            type: "ARRAY",
-                                            items: {
-                                                type: "OBJECT",
-                                                properties: {
-                                                    name: { type: "STRING" },
-                                                    cost: { type: "NUMBER" }
-                                                },
-                                                propertyOrdering: ["name", "cost"]
-                                            }
-                                        },
-                                        replacedComponents: {
-                                            type: "ARRAY",
-                                            items: { type: "STRING" }
-                                        }
-                                    },
-                                    propertyOrdering: ["invoiceNo", "workshop", "date", "km", "plate", "items", "replacedComponents"]
-                                }
+                                responseMimeType: "application/json"
                             }
                         };
 
-                        let scanSuccess = false;
-                        let lastErrorMessage = '';
+                        // Collect API Keys (user keys or default empty key which Canvas runtime handles)
+                        const userKeys = this.getGeminiKeys();
+                        const keySequence = userKeys.length > 0 ? userKeys : [""];
                         const modelsToTry = this.getGeminiModelSequence();
 
-                        for (let i = 0; i < apiKeys.length; i++) {
-                            const currentKey = apiKeys[i];
-                            const keyLabel = i === 0 ? 'Primary Key' : `Backup Key #${i}`;
+                        let scanSuccess = false;
+                        let lastErrorMessage = '';
+
+                        for (let i = 0; i < keySequence.length; i++) {
+                            const currentKey = keySequence[i];
+                            const keyLabel = userKeys.length > 0 ? (i === 0 ? 'Primary Key' : `Backup Key #${i}`) : 'Default Model';
 
                             for (const modelName of modelsToTry) {
-                                this.scanStatusMessage = `Mengekstrak nota (${keyLabel}) via ${modelName}...`;
+                                this.scanStatusMessage = `Mengekstrak nota via ${modelName} (${keyLabel})...`;
 
                                 try {
                                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${currentKey}`;
                                     const res = await fetch(apiUrl, {
                                         method: 'POST',
-                                        headers: { 
-                                            'Content-Type': 'application/json',
-                                            'x-goog-api-key': currentKey
-                                        },
+                                        headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify(payload)
                                     });
 
@@ -2262,39 +2615,44 @@ Ekstrak informasi berikut ke dalam format JSON:
                                         let jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
                                         if (jsonText) {
                                             jsonText = jsonText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '').trim();
-                                            const parsed = JSON.parse(jsonText);
+                                            
+                                            const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+                                            const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : jsonText);
 
-                                            if (parsed.invoiceNo) this.logForm.invoiceNo = parsed.invoiceNo;
+                                            if (parsed.invoiceNo) this.logForm.invoiceNo = String(parsed.invoiceNo).trim();
                                             if (parsed.workshop) {
                                                 const wsList = ['Nasmoco', 'Montecarlo', 'Zaini Auto', 'Rekanan', 'Bengkel Luar'];
                                                 const matched = wsList.find(w => w.toLowerCase() === String(parsed.workshop).toLowerCase());
                                                 if (matched) this.logForm.workshop = matched;
+                                                else if (String(parsed.workshop).toLowerCase().includes('zaini')) this.logForm.workshop = 'Zaini Auto';
                                                 else this.logForm.workshop = String(parsed.workshop);
                                             }
+                                            
+                                            // Format date cleanly to YYYY-MM-DD
                                             if (parsed.date) {
-                                                const parsedD = this.parseLocalDate(parsed.date);
-                                                if (parsedD) {
-                                                    const y = parsedD.getFullYear();
-                                                    const m = String(parsedD.getMonth() + 1).padStart(2, '0');
-                                                    const d = String(parsedD.getDate()).padStart(2, '0');
-                                                    this.logForm.date = `${y}-${m}-${d}`;
-                                                }
-                                            }
-                                            if (parsed.km && Number(parsed.km) > 0) {
-                                                this.logForm.km = Number(parsed.km);
+                                                this.logForm.date = this.formatStandardIsoDate(parsed.date);
                                             }
 
-                                            // Pencocokan Plat Nomor Otomatis dengan Daftar Armada Terdaftar
+                                            if (parsed.km && Number(parsed.km) > 0) {
+                                                this.logForm.km = Number(parsed.km);
+                                            } else {
+                                                const activeCar = (this.vehicles || []).find(v => v.id === this.logForm.vehicleId || v.plate === this.logForm.vehicleId);
+                                                if (activeCar && Number(activeCar.currentKm) > 0) {
+                                                    this.logForm.km = Number(activeCar.currentKm);
+                                                }
+                                            }
+
                                             let matchedVehicleName = '';
                                             if (parsed.plate) {
                                                 const rawPlateClean = String(parsed.plate).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                                                const matchedCar = this.vehicles.find(v => {
+                                                const matchedCar = (this.vehicles || []).find(v => {
                                                     const pClean = String(v.plate || v.id || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
                                                     return pClean && rawPlateClean && (pClean === rawPlateClean || pClean.includes(rawPlateClean) || rawPlateClean.includes(pClean));
                                                 });
                                                 if (matchedCar) {
                                                     this.logForm.vehicleId = matchedCar.id;
                                                     matchedVehicleName = `${matchedCar.plate} (${matchedCar.model})`;
+                                                    this.detectedPlateMatch = matchedVehicleName;
                                                 }
                                             }
 
@@ -2310,28 +2668,27 @@ Ekstrak informasi berikut ke dalam format JSON:
                                             }
 
                                             scanSuccess = true;
-                                            this.recordKeyUsage(currentKey, 180, 'HEALTHY');
-                                            const plateInfo = matchedVehicleName ? ` • Armada: ${matchedVehicleName}` : '';
-                                            this.showToast(`✨ AI Scan Berhasil!${plateInfo}`);
-                                            this.scanStatusMessage = `✅ Terestrak. ${matchedVehicleName ? 'Armada cocok: ' + matchedVehicleName + '.' : ''} File siap diunggah ke Drive saat Simpan diklik.`;
+                                            if (currentKey) this.recordKeyUsage(currentKey, 180, 'HEALTHY');
+                                            const plateInfo = matchedVehicleName ? ` • Plat Armada Terdeteksi: ${matchedVehicleName}` : '';
+                                            this.showToast(`✨ AI OCR Scan Berhasil!${plateInfo}`);
+                                            this.scanStatusMessage = `✅ Terestrak. ${matchedVehicleName ? 'Armada cocok: ' + matchedVehicleName + '.' : ''}`;
                                             break;
                                         }
                                     } else {
                                         const errBody = await res.json().catch(() => ({}));
                                         lastErrorMessage = errBody?.error?.message || `HTTP ${res.status}`;
-                                        if (res.status === 429) {
+                                        if (res.status === 429 && currentKey) {
                                             this.recordKeyUsage(currentKey, 0, 'LIMITED');
-                                            this.showToast(`Key #${i + 1} limit (${modelName}). Beralih ke cadangan...`);
-                                        } else {
+                                        } else if (currentKey) {
                                             this.recordKeyUsage(currentKey, 0, 'INVALID');
                                         }
                                     }
                                 } catch (fetchErr) {
-                                    console.warn(`Fetch error for Key #${i + 1} (${modelName}):`, fetchErr);
+                                    console.warn(`Fetch error for model ${modelName}:`, fetchErr);
                                     lastErrorMessage = fetchErr.message;
                                 }
 
-                                await sleep(1000);
+                                await sleep(400);
                             }
 
                             if (scanSuccess) break;
@@ -2339,83 +2696,207 @@ Ekstrak informasi berikut ke dalam format JSON:
 
                         if (!scanSuccess) {
                             this.scanStatusMessage = `Gagal scan: ${lastErrorMessage || 'Gagal mengekstrak nota'}`;
-                            this.showToast(`Gagal AI Scan: ${lastErrorMessage}`);
+                            this.showToast(`Gagal AI Scan: ${lastErrorMessage || 'Periksa koneksi atau API Key'}`);
                         }
 
                     } catch (e) {
                         this.scanStatusMessage = 'Error: ' + e.message;
                         this.showToast('Gagal scan nota: ' + e.message);
-                    } finally {
-                        this.isScanningInvoice = false;
-                        event.target.value = '';
                     }
+                    this.isScanningInvoice = false;
+                    event.target.value = '';
+                },
+
+                checkForDuplicateInvoice() {
+                    const currentInvoiceClean = this.normalizeInvoice(this.logForm.invoiceNo);
+                    const currentVehicle = String(this.logForm.vehicleId || '').trim();
+                    const currentDate = String(this.logForm.date || '').trim();
+                    const currentCost = this.logFormTotalCost;
+                    const currentId = this.logForm.id;
+
+                    const matchInvoice = currentInvoiceClean ? (this.serviceLogs || []).find(l => 
+                        l.id !== currentId && 
+                        this.normalizeInvoice(l.invoiceNo) === currentInvoiceClean
+                    ) : null;
+
+                    const matchTransaction = (this.serviceLogs || []).find(l => 
+                        l.id !== currentId && 
+                        String(l.vehicleId || '').trim() === currentVehicle &&
+                        String(l.date || '').trim() === currentDate &&
+                        (Number(l.totalCost) || 0) === currentCost
+                    );
+
+                    if (matchInvoice) {
+                        return {
+                            type: 'INVOICE_NO',
+                            duplicateLog: matchInvoice,
+                            message: `Nomor Invoice "${this.logForm.invoiceNo}" sudah tercatat pada armada ${matchInvoice.vehicleId} (Tanggal: ${this.formatDateDisplay(matchInvoice.date)}).\n\nPilih "Perbarui Data Lama" untuk menimpa, atau "Simpan Baru" untuk membuat ID transaksi baru.`
+                        };
+                    }
+
+                    if (matchTransaction) {
+                        return {
+                            type: 'TRANSACTION_DETAILS',
+                            duplicateLog: matchTransaction,
+                            message: `Transaksi identik terdeteksi!\nKendaraan ${currentVehicle} pada tanggal ${this.formatDateDisplay(currentDate)} sejumlah Rp ${currentCost.toLocaleString('id-ID')} sudah tersimpan (Invoice: ${matchTransaction.invoiceNo || '-'}).\n\nPilih "Perbarui Data Lama" untuk menimpa, atau "Simpan Baru" untuk membuat ID transaksi baru.`
+                        };
+                    }
+
+                    return null;
                 },
 
                 async saveLog() {
-                    // Unggah ke Google Drive terlebih dahulu jika ada berkas yang dipilih
-                    if (this.pendingUploadFile && this.settings.sheetsWebhookUrl) {
-                        this.isUploadingToDrive = true;
-                        this.scanStatusMessage = 'Mengunggah berkas nota ke Google Drive...';
-                        try {
-                            const driveUrl = await this.uploadFileToGoogleDrive(
-                                this.pendingUploadFile.base64Data,
-                                this.pendingUploadFile.mimeType,
-                                this.pendingUploadFile.fileName
-                            );
-                            if (driveUrl) {
-                                this.logForm.fileUrl = driveUrl;
+                    // Validasi form dasar
+                    if (!this.logForm.vehicleId) {
+                        this.showToast('Silakan pilih Armada Kendaraan terlebih dahulu!');
+                        return;
+                    }
+                    if (!this.logForm.date) {
+                        this.logForm.date = new Date().toISOString().substring(0, 10);
+                    } else {
+                        this.logForm.date = this.formatStandardIsoDate(this.logForm.date);
+                    }
+
+                    // Check duplicate invoice info
+                    const duplicateInfo = this.checkForDuplicateInvoice();
+                    if (duplicateInfo && !this.logForm.id) {
+                        this.askConfirmation(
+                            '⚠️ Terdeteksi Invoice / Transaksi Ganda',
+                            duplicateInfo.message,
+                            async () => {
+                                // Timpa data lama
+                                this.logForm.id = duplicateInfo.duplicateLog.id;
+                                await this.executeSaveLog();
+                            },
+                            'Perbarui Data Lama',
+                            'Batal',
+                            async () => {
+                                // Simpan sebagai transaksi baru
+                                this.logForm.id = 'LOG-' + Date.now();
+                                await this.executeSaveLog();
+                            },
+                            'Simpan Baru'
+                        );
+                        return;
+                    }
+
+                    await this.executeSaveLog();
+                },
+
+                async executeSaveLog() {
+                    this.isSavingLog = true;
+                    try {
+                        if (this.pendingUploadFile && !this.logForm.fileUrl) {
+                            const webhookUrl = String(this.settings.sheetsWebhookUrl || '').trim();
+                            if (webhookUrl) {
+                                try {
+                                    const driveUrl = await this.uploadFileToGoogleDrive(
+                                        this.pendingUploadFile.base64Data,
+                                        this.pendingUploadFile.mimeType,
+                                        this.pendingUploadFile.fileName
+                                    );
+                                    if (driveUrl) {
+                                        this.logForm.fileUrl = driveUrl;
+                                    }
+                                } catch (err) {
+                                    console.warn("Upload drive error handled silently:", err);
+                                }
                             }
-                        } catch (err) {
-                            console.error("Gagal mengunggah ke Google Drive saat simpan:", err);
-                            this.showToast("⚠️ Gagal Upload ke Drive, data log tetap disimpan.");
-                        } finally {
-                            this.isUploadingToDrive = false;
+                        }
+
+                        const cleanItems = (this.logForm.items || []).map(it => ({
+                            name: String(it?.name || 'Perbaikan / Maintenance').trim(),
+                            cost: Number(it?.cost) || 0
+                        }));
+
+                        const totalCost = cleanItems.reduce((s, i) => s + (Number(i?.cost) || 0), 0);
+                        const logId = this.logForm.id || ('LOG-' + Date.now());
+                        
+                        const newLog = {
+                            id: String(logId),
+                            vehicleId: String(this.logForm.vehicleId || '').trim(),
+                            workshop: String(this.logForm.workshop || 'Bengkel Luar').trim(),
+                            date: this.formatStandardIsoDate(this.logForm.date || new Date()),
+                            km: Number(this.logForm.km) || 0,
+                            invoiceNo: String(this.logForm.invoiceNo || '').trim(),
+                            isRoutine: Boolean(this.logForm.isRoutine),
+                            fileUrl: String(this.logForm.fileUrl || '').trim(),
+                            fileName: String(this.logForm.fileName || '').trim(),
+                            replacedComponents: Array.isArray(this.logForm.replacedComponents) ? this.logForm.replacedComponents : [],
+                            items: cleanItems,
+                            totalCost: Number(totalCost) || 0
+                        };
+
+                        // Simpan ke Firebase Realtime Database
+                        await set(ref(db, `artifacts/${appId}/public/data/logs/${logId}`), newLog);
+                        
+                        // Perbarui status armada
+                        await this.recalculateVehicleServiceStats(newLog.vehicleId);
+
+                        if (this.settings.autoSyncSheets && this.settings.sheetsWebhookUrl) {
+                            this.syncToGoogleSheets().catch(err => console.warn(err));
+                        }
+
+                        this.pendingUploadFile = null;
+                        this.detectedPlateMatch = '';
+                        this.modals.log = false;
+                        this.showToast('✅ Log transaksi invoice berhasil disimpan!');
+                    } catch (error) {
+                        console.error("Gagal simpan log:", error);
+                        this.showToast('❌ Gagal menyimpan log: ' + error.message);
+                    } finally {
+                        this.isSavingLog = false;
+                    }
+                },
+
+                async recalculateVehicleServiceStats(vehicleId, excludeLogId = null) {
+                    if (!vehicleId) return;
+                    const car = (this.vehicles || []).find(v => v.id === vehicleId || v.plate === vehicleId);
+                    if (!car) return;
+
+                    car.isUnderService = false;
+                    car.targetWorkshop = '';
+                    car.inServiceNotes = '';
+
+                    const vLogs = (this.serviceLogs || []).filter(l => (l.vehicleId === car.id || l.vehicleId === car.plate) && l.id !== excludeLogId);
+                    
+                    const maxKm = vLogs.reduce((max, l) => Math.max(max, Number(l.km) || 0), 0);
+                    if (maxKm > Number(car.currentKm) || maxKm > 0) {
+                        car.currentKm = maxKm;
+                    }
+
+                    const routineLogs = vLogs.filter(l => l.isRoutine !== false);
+                    if (routineLogs.length > 0) {
+                        const highestRoutineKm = Math.max(...routineLogs.map(l => Number(l.km) || 0));
+                        car.lastServiceKm = highestRoutineKm;
+
+                        const validDates = routineLogs.map(l => this.parseLocalDate(l.date)).filter(Boolean);
+                        if (validDates.length > 0) {
+                            const latestDate = new Date(Math.max(...validDates.map(d => d.getTime())));
+                            const y = latestDate.getFullYear();
+                            const m = String(latestDate.getMonth() + 1).padStart(2, '0');
+                            const d = String(latestDate.getDate()).padStart(2, '0');
+                            car.lastServiceDate = `${y}-${m}-${d}`;
                         }
                     }
 
-                    const totalCost = this.logForm.items.reduce((s, i) => s + (Number(i.cost) || 0), 0);
-                    const logId = this.logForm.id || ('LOG-' + Date.now());
-                    const newLog = {
-                        id: logId,
-                        vehicleId: this.logForm.vehicleId,
-                        workshop: this.logForm.workshop,
-                        date: this.logForm.date,
-                        km: Number(this.logForm.km) || 0,
-                        invoiceNo: this.logForm.invoiceNo,
-                        isRoutine: Boolean(this.logForm.isRoutine),
-                        fileUrl: this.logForm.fileUrl || '',
-                        fileName: this.logForm.fileName || '',
-                        replacedComponents: this.logForm.replacedComponents || [],
-                        items: this.logForm.items,
-                        totalCost
+                    const sanitizedCar = {
+                        id: String(car.id || car.plate),
+                        plate: String(car.plate || car.id),
+                        model: String(car.model || 'Mobil Dinas'),
+                        driver: String(car.driver || '-'),
+                        category: String(car.category || 'Operasional'),
+                        currentKm: Number(car.currentKm) || 0,
+                        lastServiceKm: Number(car.lastServiceKm) || 0,
+                        lastServiceDate: String(car.lastServiceDate || ''),
+                        isUnderService: Boolean(car.isUnderService),
+                        targetWorkshop: String(car.targetWorkshop || ''),
+                        inServiceNotes: String(car.inServiceNotes || '')
                     };
 
-                    await set(ref(db, `artifacts/${appId}/public/data/logs/${logId}`), newLog);
-
-                    const car = this.vehicles.find(v => v.id === this.logForm.vehicleId);
-                    if (car) {
-                        car.isUnderService = false;
-                        car.targetWorkshop = '';
-                        car.inServiceNotes = '';
-                        
-                        if (this.logForm.km > (car.currentKm || 0)) car.currentKm = this.logForm.km;
-                        
-                        if (this.logForm.isRoutine !== false) {
-                            car.lastServiceKm = this.logForm.km;
-                            car.lastServiceDate = this.logForm.date;
-                        }
-
-                        await set(ref(db, `artifacts/${appId}/public/data/vehicles/${car.id}`), car);
-                    }
-
-                    if (this.settings.autoSyncSheets && this.settings.sheetsWebhookUrl) {
-                        this.syncToGoogleSheets();
-                    }
-
-                    this.pendingUploadFile = null;
-                    this.modals.log = false;
-                    this.showToast('Log transaksi invoice berhasil disimpan!');
+                    await set(ref(db, `artifacts/${appId}/public/data/vehicles/${sanitizedCar.id}`), sanitizedCar);
                 },
+
                 openInvoiceModal(log) {
                     this.selectedLog = log;
                     this.modals.invoice = true;
@@ -2428,11 +2909,17 @@ Ekstrak informasi berikut ke dalam format JSON:
                     this.showToast(`Pengajuan servis ${car.plate} dibatalkan.`);
                 },
                 confirmDeleteLogModal(logId) {
+                    const logToDelete = (this.serviceLogs || []).find(l => l.id === logId);
+                    const vehicleId = logToDelete ? logToDelete.vehicleId : null;
+
                     this.askConfirmation(
                         'Hapus Log Transaksi',
                         'Apakah Anda yakin ingin menghapus catatan transaksi servis ini?',
                         async () => {
                             await remove(ref(db, `artifacts/${appId}/public/data/logs/${logId}`));
+                            if (vehicleId) {
+                                await this.recalculateVehicleServiceStats(vehicleId, logId);
+                            }
                             this.showToast('Transaksi berhasil dihapus.');
                             if (this.settings.autoSyncSheets && this.settings.sheetsWebhookUrl) {
                                 this.syncToGoogleSheets();
@@ -2440,6 +2927,7 @@ Ekstrak informasi berikut ke dalam format JSON:
                         }
                     );
                 },
+
                 getMonthName(m) {
                     const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
                     return months[m - 1];
@@ -2477,7 +2965,7 @@ Ekstrak informasi berikut ke dalam format JSON:
                         'Plat Nomor': l.vehicleId,
                         'Bengkel PKP': l.workshop,
                         'No Invoice / Faktur': l.invoiceNo || '-',
-                        'Rincian Pekerjaan': l.items ? l.items.map(it => it.name).join(', ') : '-',
+                        'Rincian Pekerjaan': l.items ? l.items.map(it => (it && typeof it === 'object' ? it.name : it)).join(', ') : '-',
                         'Total Biaya (Rp)': Number(l.totalCost) || 0
                     }));
 
@@ -2487,7 +2975,7 @@ Ekstrak informasi berikut ke dalam format JSON:
                         'Plat Nomor': l.vehicleId,
                         'Bengkel NON-PKP': l.workshop,
                         'No Invoice / Kwitansi': l.invoiceNo || '-',
-                        'Rincian Pekerjaan': l.items ? l.items.map(it => it.name).join(', ') : '-',
+                        'Rincian Pekerjaan': l.items ? l.items.map(it => (it && typeof it === 'object' ? it.name : it)).join(', ') : '-',
                         'Total Biaya (Rp)': Number(l.totalCost) || 0
                     }));
 
@@ -2501,38 +2989,16 @@ Ekstrak informasi berikut ke dalam format JSON:
                     XLSX.writeFile(wb, `Laporan_SPJ_Bulanan_${monthName}_${this.spjYear}.xlsx`);
                     this.showToast(`Excel SPJ ${monthName} ${this.spjYear} Berhasil Di-export!`);
                 },
-                async updatePassword() {
-                    if (!this.newPassword) return;
-                    this.adminPassword = this.newPassword;
-                    await set(ref(db, `artifacts/${appId}/public/data/settings/adminPassword`), this.newPassword);
-                    this.newPassword = '';
-                    this.showToast('Password Admin Master diperbarui!');
-                },
                 async saveIntegrations() {
-                    await set(ref(db, `artifacts/${appId}/public/data/settings/geminiApiKey`), this.settings.geminiApiKey);
-                    await set(ref(db, `artifacts/${appId}/public/data/settings/telegramBotToken`), this.settings.telegramBotToken);
-                    await set(ref(db, `artifacts/${appId}/public/data/settings/telegramChatId`), this.settings.telegramChatId);
+                    await set(ref(db, `artifacts/${appId}/public/data/settings/geminiApiKey`), this.settings.geminiApiKey || '');
+                    await set(ref(db, `artifacts/${appId}/public/data/settings/telegramBotToken`), this.settings.telegramBotToken || '');
+                    await set(ref(db, `artifacts/${appId}/public/data/settings/telegramChatId`), this.settings.telegramChatId || '');
                     await set(ref(db, `artifacts/${appId}/public/data/settings/sheetsWebhookUrl`), this.settings.sheetsWebhookUrl || '');
                     await set(ref(db, `artifacts/${appId}/public/data/settings/autoSyncSheets`), Boolean(this.settings.autoSyncSheets));
                     this.showToast('Pengaturan integrasi & API Keys berhasil disimpan!');
                 },
                 copyAppsScriptCode() {
-                    const scriptCode = `// ----------------------------------------------------------------------
-// FUNGSI MEMICU IZIN FULL ACCESS GOOGLE DRIVE (RUN 1x DI EDITOR APPS SCRIPT)
-// ----------------------------------------------------------------------
-function testPermissions() {
-  // Membuat folder sementara lalu menghapusnya untuk memicu izin Full Drive Write Access (https://www.googleapis.com/auth/drive)
-  var mainFolderName = "AUTOMAN_Nota_Servis";
-  var mainFolders = DriveApp.getFoldersByName(mainFolderName);
-  var mainFolder = mainFolders.hasNext() ? mainFolders.next() : DriveApp.createFolder(mainFolderName);
-  
-  var tempFolder = DriveApp.createFolder("AUTOMAN_TEMP_TEST_PERMISSIONS");
-  tempFolder.setTrashed(true);
-  
-  Logger.log("✅ Izin Full Access Google Drive (createFolder) Berhasil Disetujui! Silahkan lakukan Deploy Web App.");
-}
-
-function doGet(e) {
+                    const scriptCode = `function doGet(e) {
   try {
     var action = e ? e.parameter.action : '';
     if (action === 'read') {
@@ -2560,13 +3026,11 @@ function doPost(e) {
     }
     var data = JSON.parse(contents);
 
-    // 1. UPLOAD BERKAS NOTA KE GOOGLE DRIVE (OTOMATIS SUBFOLDER TAHUN & BULAN)
     if (data.action === 'UPLOAD_TO_DRIVE' || data.type === 'UPLOAD_FILE') {
       var mainFolderName = "AUTOMAN_Nota_Servis";
       var mainFolders = DriveApp.getFoldersByName(mainFolderName);
       var mainFolder = mainFolders.hasNext() ? mainFolders.next() : DriveApp.createFolder(mainFolderName);
 
-      // Tentukan Tahun dan Bulan berdasarkan tanggal transaksi
       var d = new Date();
       if (data.date) {
         var parts = String(data.date).split('-');
@@ -2582,7 +3046,6 @@ function doPost(e) {
       var monthNames = ['01 - Januari', '02 - Februari', '03 - Maret', '04 - April', '05 - Mei', '06 - Juni', '07 - Juli', '08 - Agustus', '09 - September', '10 - Oktober', '11 - November', '12 - Desember'];
       var monthStr = monthNames[d.getMonth()];
 
-      // Buat/ambil folder Tahun dan Bulan
       var yearFolder = getOrCreateFolder(mainFolder, yearStr);
       var targetFolder = getOrCreateFolder(yearFolder, monthStr);
 
@@ -2590,7 +3053,12 @@ function doPost(e) {
       var safeName = (data.vehicleId ? data.vehicleId + "_" : "") + (data.invoiceNo ? data.invoiceNo + "_" : "") + (data.fileName || "nota.jpg");
       var blob = Utilities.newBlob(decoded, data.mimeType, safeName);
       var file = targetFolder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      
+      try {
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch(e) {
+        Logger.log("Sharing permission note: " + e.toString());
+      }
 
       return ContentService.createTextOutput(JSON.stringify({
         status: 'success',
@@ -2600,31 +3068,11 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // 2. AUTO-WRITE LAPORAN & RIWAYAT SERVIS LOGS KE SPREADSHEET
     if (data.type === 'AUTO_WRITE_REPORT' || data.action === 'SYNC_LOGS' || data.logs) {
       var ss = SpreadsheetApp.getActiveSpreadsheet();
-      
-      // A. SHEET: Riwayat_Servis_Logs
-      var logSheet = ss.getSheetByName('Riwayat_Servis_Logs');
-      if (!logSheet) {
-        logSheet = ss.insertSheet('Riwayat_Servis_Logs');
-      }
-      logSheet.clear(); // Bersihkan isi lama untuk penulisan ulang lengkap
-      
-      // Header Riwayat_Servis_Logs
-      logSheet.appendRow([
-        'ID Log',
-        'Tanggal Servis',
-        'Plat Armada',
-        'Bengkel Mitra',
-        'No Invoice',
-        'Odometer (KM)',
-        'Kategori Servis',
-        'Rincian Item / Sparepart',
-        'Total Biaya (Rp)',
-        'Link Drive Nota',
-        'Waktu Sync'
-      ]);
+      var logSheet = ss.getSheetByName('Riwayat_Servis_Logs') || ss.insertSheet('Riwayat_Servis_Logs');
+      logSheet.clear();
+      logSheet.appendRow(['ID Log', 'Tanggal Servis', 'Plat Armada', 'Bengkel Mitra', 'No Invoice', 'Odometer (KM)', 'Kategori Servis', 'Rincian Item / Sparepart', 'Total Biaya (Rp)', 'Link Drive Nota', 'Waktu Sync']);
       logSheet.getRange(1, 1, 1, 11).setFontWeight('bold').setBackground('#0f172a').setFontColor('#ffffff');
 
       if (data.logs && data.logs.length > 0) {
@@ -2634,24 +3082,17 @@ function doPost(e) {
           var itemsStr = '';
           if (l.items && Array.isArray(l.items)) {
             itemsStr = l.items.map(function(it) {
-              return (it.name || '') + ' (Rp ' + (Number(it.cost)||0).toLocaleString('id-ID') + ')';
+              var name = (it && typeof it === 'object' ? it.name : it) || '';
+              var cost = (it && typeof it === 'object' ? Number(it.cost) : 0) || 0;
+              return name + ' (Rp ' + cost.toLocaleString('id-ID') + ')';
             }).join('; ');
           } else if (typeof l.items === 'object') {
             itemsStr = JSON.stringify(l.items);
           }
           var categoryStr = (l.isRoutine !== false) ? 'Servis Rutin Berkala' : 'Perbaikan Non-Rutin';
           logRows.push([
-            l.id || '',
-            l.date || '',
-            l.vehicleId || '',
-            l.workshop || '',
-            l.invoiceNo || '',
-            Number(l.km) || 0,
-            categoryStr,
-            itemsStr,
-            Number(l.totalCost) || 0,
-            l.fileUrl || '',
-            Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd HH:mm:ss")
+            l.id || '', l.date || '', l.vehicleId || '', l.workshop || '', l.invoiceNo || '', Number(l.km) || 0,
+            categoryStr, itemsStr, Number(l.totalCost) || 0, l.fileUrl || '', Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd HH:mm:ss")
           ]);
         }
         if (logRows.length > 0) {
@@ -2659,50 +3100,26 @@ function doPost(e) {
         }
       }
 
-      // B. SHEET: Master_Armada
       if (data.vehicles && data.vehicles.length > 0) {
-        var carSheet = ss.getSheetByName('Master_Armada');
-        if (!carSheet) {
-          carSheet = ss.insertSheet('Master_Armada');
-        }
+        var carSheet = ss.getSheetByName('Master_Armada') || ss.insertSheet('Master_Armada');
         carSheet.clear();
-        carSheet.appendRow([
-          'Plat Nomor',
-          'Model Armada',
-          'Pengemudi',
-          'Kategori Operasional',
-          'Odometer Terkini (KM)',
-          'Status Maintenance',
-          'Tanggal Servis Rutin Terakhir'
-        ]);
+        carSheet.appendRow(['Plat Nomor', 'Model Armada', 'Pengemudi', 'Kategori Operasional', 'Odometer Terkini (KM)', 'Status Maintenance', 'Tanggal Servis Rutin Terakhir']);
         carSheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#0f172a').setFontColor('#ffffff');
 
         var carRows = [];
         for (var j = 0; j < data.vehicles.length; j++) {
           var v = data.vehicles[j];
-          carRows.push([
-            v.plate || v.id || '',
-            v.model || '',
-            v.driver || '-',
-            v.category || 'Operasional',
-            Number(v.currentKm) || 0,
-            v.isUnderService ? 'SEDANG SERVIS' : 'NORMAL',
-            v.lastServiceDate || '-'
-          ]);
+          carRows.push([v.plate || v.id || '', v.model || '', v.driver || '-', v.category || 'Operasional', Number(v.currentKm) || 0, v.isUnderService ? 'SEDANG SERVIS' : 'NORMAL', v.lastServiceDate || '-']);
         }
         if (carRows.length > 0) {
           carSheet.getRange(2, 1, carRows.length, 7).setValues(carRows);
         }
       }
 
-      return ContentService.createTextOutput(JSON.stringify({ 
-        status: 'success', 
-        message: 'Berhasil menulis ' + (data.logs ? data.logs.length : 0) + ' data log ke tab Riwayat_Servis_Logs!' 
-      })).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Berhasil sync data ke Google Sheets!' })).setMimeType(ContentService.MimeType.JSON);
     }
 
     return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Tipe Aksi Tidak Dikenal' })).setMimeType(ContentService.MimeType.JSON);
-
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
@@ -2727,8 +3144,8 @@ function doPost(e) {
                             action: 'SYNC_LOGS',
                             timestamp: new Date().toISOString(),
                             totalSpending: this.totalSpending,
-                            vehiclesCount: this.vehicles.length,
-                            logsCount: this.serviceLogs.length,
+                            vehiclesCount: (this.vehicles || []).length,
+                            logsCount: (this.serviceLogs || []).length,
                             vehicles: this.vehicles,
                             logs: this.serviceLogs
                         };
@@ -2747,15 +3164,11 @@ function doPost(e) {
                                 const text = await res.text();
                                 let resJson = {};
                                 try { resJson = JSON.parse(text); } catch(e) {}
-                                if (resJson.status === 'success') {
-                                    this.showToast('📊 Success write ke tab Riwayat_Servis_Logs di Spreadsheet!');
-                                } else {
-                                    this.showToast('Data dikirim ke Google Sheets: ' + (resJson.message || 'Sukses'));
-                                }
+                                this.showToast('📊 Data berhasil dikirim ke Spreadsheet!');
                                 syncSuccess = true;
                             }
                         } catch (fetchErr) {
-                            console.warn("Standard fetch warning, fallbacking to no-cors mode:", fetchErr);
+                            console.warn("Fallback to no-cors mode:", fetchErr);
                         }
 
                         if (!syncSuccess) {
@@ -2802,25 +3215,29 @@ function doPost(e) {
                     if (!file) return;
                     const reader = new FileReader();
                     reader.onload = (evt) => {
-                        const data = new Uint8Array(evt.target.result);
-                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                        rows.forEach(r => {
-                            const plate = (r['Plat Nomor'] || r['Plat'] || '').toUpperCase().trim();
-                            if (plate) {
-                                const car = {
-                                    id: plate,
-                                    plate,
-                                    model: r['Model'] || r['Tipe'] || 'Mobil Dinas',
-                                    driver: r['Sopir'] || r['Pengemudi'] || '-',
-                                    category: r['Kategori'] || 'Operasional',
-                                    currentKm: Number(r['Odometer']) || 0,
-                                    isUnderService: false
-                                };
-                                set(ref(db, `artifacts/${appId}/public/data/vehicles/${plate}`), car);
-                            }
-                        });
-                        this.showToast('Import Excel Armada Selesai!');
+                        try {
+                            const data = new Uint8Array(evt.target.result);
+                            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                            rows.forEach(r => {
+                                const plate = (r['Plat Nomor'] || r['Plat'] || '').toUpperCase().trim();
+                                if (plate) {
+                                    const car = {
+                                        id: plate,
+                                        plate,
+                                        model: r['Model'] || r['Tipe'] || 'Mobil Dinas',
+                                        driver: r['Sopir'] || r['Pengemudi'] || '-',
+                                        category: r['Kategori'] || 'Operasional',
+                                        currentKm: Number(r['Odometer']) || 0,
+                                        isUnderService: false
+                                    };
+                                    set(ref(db, `artifacts/${appId}/public/data/vehicles/${plate}`), car);
+                                }
+                            });
+                            this.showToast('Import Excel Armada Selesai!');
+                        } catch(err) {
+                            this.showToast('Gagal impor Excel armada: ' + err.message);
+                        }
                     };
                     reader.readAsArrayBuffer(file);
                 },
@@ -2832,45 +3249,73 @@ function doPost(e) {
                     if (!file) return;
                     const reader = new FileReader();
                     reader.onload = (evt) => {
-                        const data = new Uint8Array(evt.target.result);
-                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                        rows.forEach((r, idx) => {
-                            const plate = (r['Plat Nomor'] || r['Plat'] || '').toUpperCase().trim();
-                            if (plate) {
-                                const logId = 'LOG-' + Date.now() + '-' + idx;
-                                const cost = Number(r['Total Biaya']) || 0;
-                                const log = {
-                                    id: logId,
-                                    vehicleId: plate,
-                                    workshop: r['Bengkel'] || 'Nasmoco',
-                                    date: r['Tanggal'] || new Date().toISOString().substring(0, 10),
-                                    km: Number(r['Odometer']) || 0,
-                                    invoiceNo: r['No Invoice'] || '',
-                                    items: [{ name: r['Rincian'] || 'Servis Maintenance', cost }],
-                                    totalCost: cost
-                                };
-                                set(ref(db, `artifacts/${appId}/public/data/logs/${logId}`), log);
-                            }
-                        });
-                        this.showToast('Import Excel Transaksi Selesai!');
+                        try {
+                            const data = new Uint8Array(evt.target.result);
+                            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                            let importedCount = 0;
+                            let updatedCount = 0;
+
+                            rows.forEach((r, idx) => {
+                                const plate = (r['Plat Nomor'] || r['Plat'] || '').toUpperCase().trim();
+                                if (plate) {
+                                    const rawInv = r['No Invoice'] || r['Invoice'] || '';
+                                    const cleanInv = this.normalizeInvoice(rawInv);
+
+                                    const existingLog = cleanInv ? (this.serviceLogs || []).find(l => 
+                                        this.normalizeInvoice(l.invoiceNo) === cleanInv
+                                    ) : null;
+
+                                    const logId = existingLog ? existingLog.id : ('LOG-' + Date.now() + '-' + idx);
+                                    const cost = Number(r['Total Biaya'] || r['Biaya']) || 0;
+                                    
+                                    let dateVal = r['Tanggal'];
+                                    if (dateVal) {
+                                        dateVal = this.formatStandardIsoDate(dateVal);
+                                    }
+
+                                    const log = {
+                                        id: logId,
+                                        vehicleId: plate,
+                                        workshop: r['Bengkel'] || 'Nasmoco',
+                                        date: dateVal || new Date().toISOString().substring(0, 10),
+                                        km: Number(r['Odometer']) || 0,
+                                        invoiceNo: rawInv,
+                                        isRoutine: true,
+                                        items: [{ name: r['Rincian'] || 'Servis Maintenance', cost }],
+                                        totalCost: cost
+                                    };
+
+                                    set(ref(db, `artifacts/${appId}/public/data/logs/${logId}`), log);
+                                    this.recalculateVehicleServiceStats(plate);
+
+                                    if (existingLog) updatedCount++;
+                                    else importedCount++;
+                                }
+                            });
+                            this.showToast(`Import Excel Selesai! (${importedCount} baru, ${updatedCount} diperbarui)`);
+                        } catch(err) {
+                            this.showToast('Gagal impor Excel transaksi: ' + err.message);
+                        }
                     };
                     reader.readAsArrayBuffer(file);
                 },
                 exportVehiclesExcel() {
-                    const ws = XLSX.utils.json_to_sheet(this.vehicles);
+                    const ws = XLSX.utils.json_to_sheet(this.vehicles || []);
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, "Armada");
                     XLSX.writeFile(wb, "Master_Armada_Admin.xlsx");
                 },
                 exportLogsExcel() {
-                    const ws = XLSX.utils.json_to_sheet(this.serviceLogs);
+                    const ws = XLSX.utils.json_to_sheet(this.serviceLogs || []);
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, "MasterLogs");
                     XLSX.writeFile(wb, "Master_Transaksi_Admin.xlsx");
                 }
             }
-        }).mount('#app');
+        });
+
+        vueApp.mount('#app');
     </script>
 </body>
 </html>
